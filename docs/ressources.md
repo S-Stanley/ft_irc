@@ -5,3 +5,4 @@
 * [Tutoriel sur ft_irc](https://ircgod.com/posts/ircserver1/building-an-irc-server-1/)
 * [IRC commandes de base](http://www.csun.edu/~webteach/mirc/commands.html)
 * [IRC client en ligne](https://kiwiirc.com/nextclient/)
+* [How to connect to an IRC server](https://oramind.com/tutorial-how-to-make-an-irc-server-connection/)
