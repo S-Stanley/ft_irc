@@ -6,3 +6,5 @@
 * [IRC commandes de base](http://www.csun.edu/~webteach/mirc/commands.html)
 * [IRC client en ligne](https://kiwiirc.com/nextclient/)
 * [How to connect to an IRC server](https://oramind.com/tutorial-how-to-make-an-irc-server-connection/)
+* [RFC IRC Client Protocol](https://datatracker.ietf.org/doc/html/rfc2812)
+* [Building an IRC Client and Server](http://www.lsv.fr/~rodrigue/teach/npp/2012/tp1.pdf)
