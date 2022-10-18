@@ -15,6 +15,8 @@
 #include <netinet/in.h>
 #include <errno.h>
 
+#include "store_commands.hpp"
+
 #define PORT 6667
 #define EXIT_FAILURE 1
 
@@ -32,6 +34,8 @@ int main(void)
     int opt = 1;
     int addrlen = sizeof(address);
     char buffer[1024] = {0};
+
+    std::map<std::string, void(*)(pollfd*, int&)> cmds = store_commands(); // Stockage des commandes dans une map
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
@@ -103,6 +107,10 @@ int main(void)
                         {
                             close(fds[nfds - 1].fd);
                             nfds--;
+                        }
+                        if (cmds.find(buffer) != cmds.end())
+                        {
+                            cmds.find(buffer)->second(fds, nfds);
                         }
                         printf("%s", buffer);
                     }
