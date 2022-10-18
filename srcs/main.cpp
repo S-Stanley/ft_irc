@@ -110,7 +110,7 @@ int main(void)
                         {
                             cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
                         }
-                        else if (buffer != NULL)                // Ce n'est pas une commande connue, on envoie le message à tous les utilisateurs présents dans le channel
+                        else               // Ce n'est pas une commande connue, on envoie le message à tous les utilisateurs présents dans le channel
                         {
                             for (unsigned int j = 1; j <= (unsigned int)nfds; j++)
                             {
