@@ -21,6 +21,18 @@
 #define PORT 6667
 #define EXIT_FAILURE 1
 
+void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string message)
+{
+    unsigned int i = 0;
+
+    while (i < nb_fd)
+    {
+        std::cout << "sending to: " << i << std::endl;
+        send(fds[i].fd, message.c_str(), strlen(message.c_str()), 0);
+        i++;
+    }
+}
+
 int main(void)
 {
     int server_fd;
@@ -120,6 +132,7 @@ int main(void)
                                 }
                             }
                         }
+                        send_broadcast(nfds, fds, "hello world\n");
                         printf("%s", buffer);
                     }
                 }
