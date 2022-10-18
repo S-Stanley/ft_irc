@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 
+#include <list>
 #include "store_commands.hpp"
 
 #define PORT 6667
@@ -35,7 +36,7 @@ int main(void)
     int addrlen = sizeof(address);
     char buffer[1024] = {0};
 
-    std::map<std::string, void(*)(pollfd*, int&)> cmds = store_commands(); // Stockage des commandes dans une map
+    std::map<std::string, void(*)(pollfd*, int&, unsigned int)> cmds = store_commands(); // Stockage des commandes dans une map
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
@@ -91,6 +92,7 @@ int main(void)
                 std::cout << "connected" << std::endl;
                 fds[nfds].fd = new_socket[socket_id];
                 fds[nfds].events = POLLIN;
+                send(fds[nfds].fd, "Chatting in : <#Inserer le bon channel>\n", strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
                 nfds++;
                 socket_id++;
             }
@@ -103,14 +105,20 @@ int main(void)
                     if (fds[i].revents == 1)
                     {
                         read(fds[i].fd, (char *)buffer, 1024);
-                        if (strcmp(buffer, "exit\r\n") == 0 || strcmp(buffer, "exit\r\n\n") == 0)
+                        DBG(buffer)
+                        if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
                         {
-                            close(fds[nfds - 1].fd);
-                            nfds--;
+                            cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
                         }
-                        if (cmds.find(buffer) != cmds.end())
+                        else if (buffer != NULL)                // Ce n'est pas une commande connue, on envoie le message à tous les utilisateurs présents dans le channel
                         {
-                            cmds.find(buffer)->second(fds, nfds);
+                            for (unsigned int j = 1; j <= (unsigned int)nfds; j++)
+                            {
+                                if (j != i)
+                                {
+                                    send(fds[j].fd, buffer, strlen(buffer), 0);
+                                }
+                            }
                         }
                         printf("%s", buffer);
                     }

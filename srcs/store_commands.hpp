@@ -6,18 +6,29 @@
 #include <unistd.h>
 # define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
-void exit(pollfd *fds, int& nfds)
+void exit(pollfd *fds, int& nfds, unsigned int i)
 {
-    close(fds[nfds - 1].fd);
+    close(fds[i].fd);
     nfds--;
-    // DBG("ici")
     return ;
 }
 
-std::map<std::string, void(*)(pollfd*, int&)> store_commands()
+// void join(pollfd *fds, int& nfds)
+// {
+
+// }
+
+// void createChannel(pollfd *fds, int& nfds)
+// {
+
+// }
+
+std::map<std::string, void(*)(pollfd*, int&, unsigned int)> store_commands()
 {
-    std::map<std::string, void(*)(pollfd*, int&)> commands;
+    std::map<std::string, void(*)(pollfd*, int&, unsigned int)> commands;
     commands["exit\r\n"] = exit;
     commands["exit\r\n\n"] = exit;          // Hacky patch à modifier
+    // commands["join\r\n"] = join;
+    // commands["create.channel\r\n"] = createChannel;
     return (commands);
 }
