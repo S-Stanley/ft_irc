@@ -18,6 +18,11 @@
 #include <list>
 #include "check_args.hpp"
 
+#include "store_commands.hpp"
+#include "users.hpp"
+#include "utils.hpp"
+#include "response.hpp"
+
 // #define PORT 6667
 #define EXIT_FAILURE 1
 
@@ -54,6 +59,8 @@ int main(int argc, char **argv)
     int new_socket[200];
     int socket_id = 0;
     struct sockaddr_in address;
+    users    *all_users = NULL;
+    int valread;
 
     int rc;
     int nfds = 1;
@@ -100,7 +107,7 @@ int main(int argc, char **argv)
     while (true)
     {
 
-        std::cout << "poll setup: " << nfds << std::endl;
+        read_all_users(all_users);
         rc = poll(fds, nfds, -1);
 
         if (rc < 0)
@@ -110,13 +117,12 @@ int main(int argc, char **argv)
         {
             if (fds[0].revents == 1)
             {
-                std::cout << "inserting new socket: " << nfds - 1 << std::endl;
                 if ((new_socket[socket_id] = accept(serv.fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
                 {
                     perror("accept");
                     exit(EXIT_FAILURE);
                 }
-                std::cout << "connected" << std::endl;
+                all_users = add_user(all_users, new_user(socket_id, "", ""));
                 fds[nfds].fd = new_socket[socket_id];
                 fds[nfds].events = POLLIN;
                 send(fds[nfds].fd, "Chatting in : <#Inserer le bon channel>\n", strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
@@ -131,7 +137,31 @@ int main(int argc, char **argv)
                     i++;
                     if (fds[i].revents == 1)
                     {
-                        read(fds[i].fd, (char *)buffer, 1024);
+                        valread = read(fds[i].fd, (char *)buffer, 1024);
+                        buffer[valread] = 0;
+                        std::string *all = split(buffer, "\n");
+                        for (int x = 0; x < 5; x++)
+                        {
+                            std::string *value = split(all[x], " ");
+                            if (value[0] == "NICK")
+                            {
+                                if (is_nickname_available(all_users, value[1]))
+                                    all_users = set_user_nickname(all_users, i -1, value[1]);
+                                else
+                                    send_nickname_already_used(fds[i].fd, value[1]);
+                            }
+                            if (value[0] == "USER")
+                            {
+                                all_users = set_user_username(all_users, i -1, value[1]);
+                                if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
+                                {
+                                    set_user_authentificate(i -1, all_users);
+                                    send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
+                                }
+                            }
+                        }
+                        delete[] all;
+                        // DBG(buffer)
                         if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
                         {
                             cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
@@ -146,12 +176,16 @@ int main(int argc, char **argv)
                                 }
                             }
                         }
-                        // send_broadcast(nfds, fds, "hello world\n");
-                        printf("%s", buffer);
+                        std::cout << buffer;
                     }
+                }
+                if (strcmp(buffer, "SHUTDOWN\r\n") == 0)
+                {
+                    break;
                 }
             }
         }
     }
+    free_all_users(all_users);
     return (0);
 }
