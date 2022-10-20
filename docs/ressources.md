@@ -11,3 +11,4 @@
 * [Socket tutorial](http://vidalc.chez.com/lf/socket.html)
 * [Using poll() instead of select()](https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select)
 * [Example IRC Communications](http://chi.cs.uchicago.edu/chirc/irc_examples.html)
+* [List of all IRC commands](https://en.wikipedia.org/wiki/List_of_Internet_Relay_Chat_commands)
