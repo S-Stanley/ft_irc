@@ -16,14 +16,21 @@
 #include <errno.h>
 
 #include <list>
-#include "store_commands.hpp"
+#include "check_args.hpp"
 
-#define PORT 6667
+// #define PORT 6667
 #define EXIT_FAILURE 1
+
+struct server
+{
+    int fd;
+    char *pw;
+    int port;
+};
 
 void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string message)
 {
-    unsigned int i = 0;
+    unsigned int i = 1;
 
     while (i < nb_fd)
     {
@@ -33,9 +40,17 @@ void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string messa
     }
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
-    int server_fd;
+    if (check_args(argc, argv) == -1)
+    {
+        return (0);
+    }
+
+    server serv;
+    serv.port = atoi(argv[1]);
+    serv.pw = argv[2];
+
     int new_socket[200];
     int socket_id = 0;
     struct sockaddr_in address;
@@ -50,13 +65,13 @@ int main(void)
 
     std::map<std::string, void(*)(pollfd*, int&, unsigned int)> cmds = store_commands(); // Stockage des commandes dans une map
 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((serv.fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
+    if (setsockopt(serv.fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
         perror("setcokopt");
         exit(EXIT_FAILURE);
@@ -64,21 +79,21 @@ int main(void)
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_port = htons(serv.port);
 
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
+    if (bind(serv.fd, (struct sockaddr *)&address, sizeof(address))<0)
     {
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    if (listen(server_fd, 3) < 0)
+    if (listen(serv.fd, 3) < 0)
     {
         perror("listen");
         exit(EXIT_FAILURE);
     }
 
-    fds[0].fd = server_fd;
+    fds[0].fd = serv.fd;
     fds[0].events = POLLIN;
 
     unsigned int i = 0;
@@ -96,7 +111,7 @@ int main(void)
             if (fds[0].revents == 1)
             {
                 std::cout << "inserting new socket: " << nfds - 1 << std::endl;
-                if ((new_socket[socket_id] = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
+                if ((new_socket[socket_id] = accept(serv.fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
                 {
                     perror("accept");
                     exit(EXIT_FAILURE);
@@ -117,7 +132,6 @@ int main(void)
                     if (fds[i].revents == 1)
                     {
                         read(fds[i].fd, (char *)buffer, 1024);
-                        DBG(buffer)
                         if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
                         {
                             cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
@@ -132,7 +146,7 @@ int main(void)
                                 }
                             }
                         }
-                        send_broadcast(nfds, fds, "hello world\n");
+                        // send_broadcast(nfds, fds, "hello world\n");
                         printf("%s", buffer);
                     }
                 }
