@@ -8,6 +8,7 @@ struct users {
     std::string     nickname;
     std::string     username;
     bool            authentificate;
+    bool            connected;
     struct users    *next;
 };
 

@@ -26,13 +26,6 @@
 // #define PORT 6667
 #define EXIT_FAILURE 1
 
-struct server
-{
-    int fd;
-    char *pw;
-    int port;
-};
-
 void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string message)
 {
     unsigned int i = 1;
@@ -159,8 +152,37 @@ int main(int argc, char **argv)
                                     send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
                                 }
                             }
+                            else if (value[0] == "PASS")
+                            {
+                                if (all_users[i - 1].connected)
+                                {
+                                    send(fds[i].fd, "ERR_ALREADYREGISTRED\n", strlen("ERR_ALREADYREGISTRED\n"), 0);
+                                }
+                                else if (value[1].empty())
+                                {
+                                    send(fds[i].fd, "ERR_NEEDMOREPARAMS\n", strlen("ERR_NEEDMOREPARAMS\n"), 0);
+                                }
+                                else if (!value[2].empty())
+                                {
+                                    send(fds[i].fd, "Error: invalid password (no spaces)\n", strlen("Error: invalid password (no spaces)\n"), 0);
+                                }
+                                else if (value[1] != serv.pw)
+                                {
+                                    send(fds[i].fd, "Error: invalid password\n", strlen("Error: invalid password\n"), 0);
+                                }
+                                else
+                                {
+                                    all_users[i - 1].connected = true;
+                                    send(fds[i].fd, "Password OK\n", strlen("Password OK\n"), 0);
+                                }
+                            }
                         }
                         delete[] all;
+                        if (all_users[i - 1].connected == false)
+                        {
+                            send(fds[i].fd, "'PASS <server_password>'\n", strlen("'PASS <server_password>'\n"), 0);
+                            break ;
+                        }
                         // DBG(buffer)
                         if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
                         {
