@@ -159,13 +159,6 @@ int main(int argc, char **argv)
                         buffer[valread] = 0;
                         std::string *tmp = split(buffer, "\n");
                         std::string *all = split(*tmp, "\r");
-                        int j = 0;
-                        int u = 0;
-                        while (all[u].empty() != true && all[u][j] != 0)
-                        {
-                            DBG(all[u][j])
-                            j++;
-                        }
                         for (int x = 0; x < 5; x++)
                         {
                             std::string *value = split(all[x], " ");
