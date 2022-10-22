@@ -60,7 +60,10 @@ bool    Server::exec(std::string *all, unsigned int i)
         if (value[0] == "NICK")
         {
             if (get_user(i - 1, all_users)->connected == false)
+            {
+                delete[] value;
                 continue;
+            }
             if (is_nickname_available(all_users, value[1]))
                 all_users = set_user_nickname(all_users, i -1, value[1]);
             else
@@ -69,7 +72,10 @@ bool    Server::exec(std::string *all, unsigned int i)
         if (value[0] == "USER")
         {
             if (get_user(i - 1, all_users)->connected == false)
+            {
+                delete[] value;
                 continue;
+            }
             all_users = set_user_username(all_users, i -1, value[1]);
             if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
             {
@@ -79,8 +85,10 @@ bool    Server::exec(std::string *all, unsigned int i)
         }
         if (value[0] == "SHUTDOWN")
         {
+            delete[] value;
             return (false);
         }
+        delete[] value;
     }
     return (true);
 }
@@ -123,10 +131,9 @@ void    Server::run(void)
             }
             else
             {
-                i = 0;
-                while (i <= (unsigned int)nfds)
+                i = 1;
+                while (i < (unsigned int)nfds)
                 {
-                    i++;
                     if (fds[i].revents == 1)
                     {
                         std::string *all = get_commands(fds, i);
@@ -145,6 +152,7 @@ void    Server::run(void)
                         } else {
                             server_should_stop = this->exec(all, i);
                         }
+                        i++;
                         delete[] all;
                     }
                 }

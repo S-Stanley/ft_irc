@@ -13,8 +13,10 @@ std::string *get_commands(struct pollfd *fds, int i)
     for (int it = 0; it < (int)tmp->length(); it++)
     {
         std::string *all_test = split(tmp[it], "\r");
-        to_return[x] = all_test[0];
+        to_return[x] = (all_test[0].c_str());
+        delete[] all_test;
         x++;
     }
+    delete[] tmp;
     return (to_return);
 }
