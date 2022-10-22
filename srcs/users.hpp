@@ -21,5 +21,6 @@ void    free_all_users(users *lst);
 users   *get_user(int user_id, users *lst);
 users   *set_user_authentificate(int user_id, users* lst);
 bool    is_nickname_available(users *lst, std::string nickname);
+users   *find_user_by_nickname(std::string nickname, users *lst);
 
 #endif

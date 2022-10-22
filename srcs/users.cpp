@@ -117,3 +117,16 @@ bool    is_nickname_available(users *lst, std::string nickname)
     }
     return (true);
 }
+
+users   *find_user_by_nickname(std::string nickname, users *lst)
+{
+    users   *tmp = lst;
+
+    while (tmp)
+    {
+        if (tmp->nickname == nickname)
+            return (tmp);
+        tmp = tmp->next;
+    }
+    return (NULL);
+}
