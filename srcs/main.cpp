@@ -26,13 +26,6 @@
 // #define PORT 6667
 #define EXIT_FAILURE 1
 
-struct server
-{
-    int fd;
-    char *pw;
-    int port;
-};
-
 void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string message)
 {
     unsigned int i = 1;
@@ -42,6 +35,31 @@ void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string messa
         std::cout << "sending to: " << i << std::endl;
         send(fds[i].fd, message.c_str(), strlen(message.c_str()), 0);
         i++;
+    }
+}
+
+void    check_password(users *all_users, pollfd *fds, std::string *value, server serv, unsigned int i)
+{
+    if (all_users[i - 1].connected)
+    {
+        send(fds[i].fd, "ERR_ALREADYREGISTRED\n", strlen("ERR_ALREADYREGISTRED\n"), 0);
+    }
+    else if (value[1].empty())
+    {
+        send(fds[i].fd, "ERR_NEEDMOREPARAMS\n", strlen("ERR_NEEDMOREPARAMS\n"), 0);
+    }
+    else if (!value[2].empty())
+    {
+        send(fds[i].fd, "Error: invalid password (no spaces)\n", strlen("Error: invalid password (no spaces)\n"), 0);
+    }
+    else if (value[1] != serv.pw)
+    {
+        send(fds[i].fd, "Error: invalid password\n", strlen("Error: invalid password\n"), 0);
+    }
+    else
+    {
+        all_users[i - 1].connected = true;
+        send(fds[i].fd, "Password OK\n", strlen("Password OK\n"), 0);
     }
 }
 
@@ -139,10 +157,20 @@ int main(int argc, char **argv)
                     {
                         valread = read(fds[i].fd, (char *)buffer, 1024);
                         buffer[valread] = 0;
-                        std::string *all = split(buffer, "\n");
+                        std::string *tmp = split(buffer, "\n");
+                        std::string *all = split(*tmp, "\r");
                         for (int x = 0; x < 5; x++)
                         {
                             std::string *value = split(all[x], " ");
+                            if (value[0] == "PASS")
+                            {
+                                check_password(all_users, fds, value, serv, i);
+                            }
+                            if (all_users[i - 1].connected == false)
+                            {
+                                send(fds[i].fd, "'PASS <server_password>'\n", strlen("'PASS <server_password>'\n"), 0);
+                                break ;
+                            }
                             if (value[0] == "NICK")
                             {
                                 if (is_nickname_available(all_users, value[1]))
@@ -161,18 +189,21 @@ int main(int argc, char **argv)
                             }
                         }
                         delete[] all;
-                        // DBG(buffer)
-                        if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
+                        if (all_users[i - 1].connected == true)
                         {
-                            cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
-                        }
-                        else               // Ce n'est pas une commande connue, on envoie le message à tous les utilisateurs présents dans le channel
-                        {
-                            for (unsigned int j = 1; j <= (unsigned int)nfds; j++)
+                            // DBG(buffer)
+                            if (cmds.find(buffer) != cmds.end())    // On cherche dans la map si la commande existe
                             {
-                                if (j != i)
+                                cmds.find(buffer)->second(fds, nfds, i);     // On exécute la fonction associée
+                            }
+                            else               // Ce n'est pas une commande connue, on envoie le message à tous les utilisateurs présents dans le channel
+                            {
+                                for (unsigned int j = 1; j <= (unsigned int)nfds; j++)
                                 {
-                                    send(fds[j].fd, buffer, strlen(buffer), 0);
+                                    if (j != i)
+                                    {
+                                        send(fds[j].fd, buffer, strlen(buffer), 0);
+                                    }
                                 }
                             }
                         }

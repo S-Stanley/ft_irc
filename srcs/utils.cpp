@@ -9,6 +9,12 @@ std::string *split(std::string to_split, std::string split_at)
     while (i < to_split.size())
     {
         pos = to_split.find(split_at);
+        if (pos > to_split.size())
+        {
+            token[i] = to_split.substr(0, to_split.size());
+            to_split.erase(0, to_split.size());
+            break ;
+        }
         token[i] = to_split.substr(0, pos);
         to_split.erase(0, pos + split_at.length());
         i++;
