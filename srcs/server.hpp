@@ -24,6 +24,7 @@ class Server {
         void    set_config(int port, char *password);
         void    run(void);
         void    setup(void);
+        bool    exec(std::string *all, unsigned int i);
     private:
         struct sockaddr_in  address;
         int                 server_fd;

@@ -48,16 +48,53 @@ void    Server::setup(void)
     fds[0].events = POLLIN;
 }
 
+bool    Server::exec(std::string *all, unsigned int i)
+{
+    for (int x = 0; x < (int)all->length(); x++)
+    {
+        std::string *value = split(all[x], " ");
+        if (value[0] == "PASS")
+        {
+            check_password(all_users, fds, value, password, i);
+        }
+        if (value[0] == "NICK")
+        {
+            if (get_user(i - 1, all_users)->connected == false)
+                continue;
+            if (is_nickname_available(all_users, value[1]))
+                all_users = set_user_nickname(all_users, i -1, value[1]);
+            else
+                send_nickname_already_used(fds[i].fd, value[1]);
+        }
+        if (value[0] == "USER")
+        {
+            if (get_user(i - 1, all_users)->connected == false)
+                continue;
+            all_users = set_user_username(all_users, i -1, value[1]);
+            if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
+            {
+                set_user_authentificate(i -1, all_users);
+                send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
+            }
+        }
+        if (value[0] == "SHUTDOWN")
+        {
+            return (false);
+        }
+    }
+    return (true);
+}
+
 void    Server::run(void)
 {
     int             rc;
     int             nfds = 1;
     int             new_socket[200];
     int             socket_id = 0;
-    bool            stop_server = false;
+    bool            server_should_stop = true;
     unsigned int    i = 0;
     int             addrlen = sizeof(address);
-
+    int             throw_err_password = true;
 
     while (true)
     {
@@ -93,50 +130,27 @@ void    Server::run(void)
                     if (fds[i].revents == 1)
                     {
                         std::string *all = get_commands(fds, i);
-                        if (!all[0].find("PASS") && get_user(i - 1, all_users)->connected == false)
-                        {
-                            send_err_password(fds[i].fd);
-                            continue;
-                        }
                         for (int x = 0; x < (int)all->length(); x++)
                         {
-                            std::string *value = split(all[x], " ");
-                            if (value[0] == "PASS")
+                            if (all[x].find("PASS") != std::string::npos || get_user(i - 1, all_users)->connected == true)
                             {
-                                check_password(all_users, fds, value, password, i);
-                            }
-                            if (value[0] == "NICK")
-                            {
-                                if (get_user(i - 1, all_users)->connected == false)
-                                    continue;
-                                if (is_nickname_available(all_users, value[1]))
-                                    all_users = set_user_nickname(all_users, i -1, value[1]);
-                                else
-                                    send_nickname_already_used(fds[i].fd, value[1]);
-                            }
-                            if (value[0] == "USER")
-                            {
-                                if (get_user(i - 1, all_users)->connected == false)
-                                    continue;
-                                all_users = set_user_username(all_users, i -1, value[1]);
-                                if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
-                                {
-                                    set_user_authentificate(i -1, all_users);
-                                    send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
-                                }
-                            }
-                            if (value[0] == "SHUTDOWN")
-                            {
-                                stop_server = true;
+                                throw_err_password = false;
                                 break;
                             }
+                        }
+                        if (throw_err_password)
+                        {
+                            send_err_password(fds[i].fd);
+                            throw_err_password = true;
+                        } else {
+                            server_should_stop = this->exec(all, i);
                         }
                         delete[] all;
                     }
                 }
             }
         }
-        if (stop_server)
+        if (!server_should_stop)
             break;
     }
 }
