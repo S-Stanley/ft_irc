@@ -9,14 +9,15 @@ struct channel
 {
      std::string name;
      std::string topic;
-     users*      users_list;			// Changer en liste d'ids des users
-	 struct channel *next;
+     int         users_id[100];			// Changer en liste d'ids des users
+     int         nb_users;
+	struct channel *next;
 };
 
+channel						*create_channel(std::string name, std::string topic);
+channel                            *add_new_channel(channel *channels, channel *new_channel);
 bool							channel_exists(std::string name, channel *channels);
-channel *add_new_channel(channel *channels, channel *new_channel);
-channel							*find_channel(std::string name, channel *channels);
-channel							*create_channel(std::string name, std::string topic);
-users							*add_user_channel(users *users_list, users* user);
+channel						*find_channel(std::string name, channel *channels);
+void    users_display(channel *channel);
 
 #endif

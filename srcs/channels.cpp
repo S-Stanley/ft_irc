@@ -8,19 +8,17 @@ bool	channel_exists(std::string name, channel *channels)
     {
         return (false);
     }
-    if (tmp->name == name)
+    else if (tmp->name == name)
     {
         return (true);
     }
     while (tmp->next)
     {
-        DBG(tmp->name)
         if (tmp->name == name)
         {
             return (true);
         }
         tmp = tmp->next;
-        DBG(tmp)
     }
     return (false);
 }
@@ -45,8 +43,8 @@ channel *create_channel(std::string name, std::string topic)
     channel *chan = new channel;
     chan->name = name;
     chan->topic = topic;
-    chan->users_list = NULL;
     chan->next = NULL;
+    chan->nb_users = 0;
     return (chan);
 }
 
@@ -64,7 +62,13 @@ channel *add_new_channel(channel *channels, channel *new_channel)
     return (channels);
 }
 
-users *add_user_channel(users *users_list, users* user)
+void    users_display(channel *chan)
 {
-    return (add_user(users_list, user));
+    channel *tmp = chan;
+    int i = 0;
+    while (i < tmp->nb_users)
+    {
+        std::cout << "User: " <<  i << " - user_id: " << tmp->users_id[i] << std::endl;
+        i++;
+    }
 }
