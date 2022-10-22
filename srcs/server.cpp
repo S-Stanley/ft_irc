@@ -3,6 +3,7 @@
 Server::Server(void)
 {
     this->all_users = NULL;
+    this->channels = NULL;
     return ;
 }
 
@@ -77,6 +78,25 @@ bool    Server::exec(std::string *all, unsigned int i)
                 send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
             }
         }
+        if (value[0] == "JOIN")
+        {
+            if (channel_exists(value[1], channels) == false)
+            {
+                channel *new_channel = create_channel(value[1], "");
+                new_channel->users_list = add_user_channel(new_channel->users_list, get_user(i -1, all_users));
+                channels = add_new_channel(channels, new_channel);
+                DBG(channels->users_list->next)
+            }
+            else
+            {
+                DBG(channels->users_list->next)
+                channel *chan = find_channel(value[1], channels);
+                chan->users_list = add_user_channel(chan->users_list, get_user(i -1, all_users));
+                // read_all_users(chan->users_list);
+                // add_user_channel(it->users_list, get_user(i -1, all_users));
+            }
+            // DBG(channels.front().users_list->nickname)
+        }
         if (value[0] == "SHUTDOWN")
         {
             return (false);
@@ -99,7 +119,7 @@ void    Server::run(void)
     while (true)
     {
 
-        read_all_users(all_users);
+        // read_all_users(all_users);
         rc = poll(fds, nfds, -1);
 
         if (rc < 0)

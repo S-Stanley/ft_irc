@@ -15,6 +15,8 @@
 #include "utils.hpp"
 #include "commands.hpp"
 #include "check.hpp"
+#include "channels.hpp"
+#define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
 class Server {
     public:
@@ -32,6 +34,7 @@ class Server {
         int                 port;
         struct pollfd       fds[200];
         users               *all_users;
+        channel             *channels;
 };
 
 #endif

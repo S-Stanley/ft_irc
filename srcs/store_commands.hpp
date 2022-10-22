@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "users.hpp"
+#include <list>
 
-# define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
 void exit(pollfd *fds, int& nfds, unsigned int i)
 {
