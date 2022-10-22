@@ -83,6 +83,24 @@ bool    Server::exec(std::string *all, unsigned int i)
                 send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
             }
         }
+        if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
+        {
+            if (!find_user_by_nickname(value[1], all_users))
+            {
+                send_no_such_nick(fds[i].fd, value[1]);
+                return (true);
+            }
+            if (value->length() == 2)
+            {
+                send_no_text(fds[i].fd);
+                return (true);
+            }
+            send_message_to_user(
+                fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
+                value[1],
+                value[2]
+            );
+        }
         if (value[0] == "SHUTDOWN")
         {
             delete[] value;
@@ -131,9 +149,10 @@ void    Server::run(void)
             }
             else
             {
-                i = 1;
+                i = 0;
                 while (i < (unsigned int)nfds)
                 {
+                    i++;
                     if (fds[i].revents == 1)
                     {
                         std::string *all = get_commands(fds, i);
@@ -152,7 +171,6 @@ void    Server::run(void)
                         } else {
                             server_should_stop = this->exec(all, i);
                         }
-                        i++;
                         delete[] all;
                     }
                 }

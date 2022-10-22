@@ -30,3 +30,39 @@ void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string messa
         i++;
     }
 }
+
+void	send_no_recipient(int socket, std::string command)
+{
+	std::string message = ":127.0.0.1 411 ERR_NORECIPIENT :No recipient given " + command +" \r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void	send_no_text(int socket)
+{
+	std::string message = ":127.0.0.1 412 ERR_NOTEXTTOSEND :No text to send\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void	send_no_such_nick(int socket, std::string nickname)
+{
+	std::string message = ":127.0.0.1 401 ERR_NOSUCHNICK " + nickname + " :No such nick/channel\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void	send_err_cannot_send_to_chan(int socket, std::string channel_name)
+{
+	std::string message = ":127.0.0.1 404 ERR_CANNOTSENDTOCHAN " + channel_name + " :Cannot send to channel\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void	send_message_to_user(int socket, std::string nickname, std::string message_to_send)
+{
+	std::string message = ":127.0.0.1 stan!stan@127.0.0.1 PRIVMSG " + nickname + " :" + message_to_send + "\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void	send_away_message_to_user(int socket, std::string nickname, std::string away_message)
+{
+	std::string message = ":stan!stan@127.0.0.1 301 RPL_AWAY " + nickname + " :" + away_message +"\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
