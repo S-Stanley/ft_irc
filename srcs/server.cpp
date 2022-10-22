@@ -83,20 +83,21 @@ bool    Server::exec(std::string *all, unsigned int i)
             channel *chan;
             if (channel_exists(value[1], channels) == false)
             {
-                chan = create_channel(value[1], "");
+                chan = create_channel(value[1], "Default Topic");
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
                 chan->nb_users++;
                 channels = add_new_channel(channels, chan);
+                send_rpl_topic(chan, fds[i].fd);
+                send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
             }
             else
             {
                 chan = find_channel(value[1], channels);
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
-                DBG(chan->users_id[chan->nb_users]);
                 chan->nb_users++;
+                send_rpl_topic(chan, fds[i].fd);
+                send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
             }
-            if (chan)
-                users_display(chan);
         }
         if (value[0] == "SHUTDOWN")
         {

@@ -6,10 +6,13 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <string.h>
+#include "channels.hpp"
 
 void	send_connection_ok(int socket, std::string nickname);
 void	send_nickname_already_used(int socket, std::string nickname);
 void	send_err_password(int socket);
 void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string message);
+void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users *users_list);
+void    send_rpl_topic(channel *chan, int socket);
 
 #endif

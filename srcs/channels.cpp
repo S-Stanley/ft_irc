@@ -62,7 +62,7 @@ channel *add_new_channel(channel *channels, channel *new_channel)
     return (channels);
 }
 
-void    users_display(channel *chan)
+void    display_channel_users(channel *chan)
 {
     channel *tmp = chan;
     int i = 0;
