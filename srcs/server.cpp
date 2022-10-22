@@ -3,6 +3,7 @@
 Server::Server(void)
 {
     this->all_users = NULL;
+    this->channels = NULL;
     return ;
 }
 
@@ -100,6 +101,27 @@ bool    Server::exec(std::string *all, unsigned int i)
                 value[1],
                 value[2]
             );
+        }
+        if (value[0] == "JOIN")
+        {
+            channel *chan;
+            if (channel_exists(value[1], channels) == false)
+            {
+                chan = create_channel(value[1], "Default Topic");
+                chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+                chan->nb_users++;
+                channels = add_new_channel(channels, chan);
+                send_rpl_topic(chan, fds[i].fd);
+                send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
+            }
+            else
+            {
+                chan = find_channel(value[1], channels);
+                chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+                chan->nb_users++;
+                send_rpl_topic(chan, fds[i].fd);
+                send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
+            }
         }
         if (value[0] == "SHUTDOWN")
         {

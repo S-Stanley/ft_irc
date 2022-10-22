@@ -66,3 +66,25 @@ void	send_away_message_to_user(int socket, std::string nickname, std::string awa
 	std::string message = ":stan!stan@127.0.0.1 301 RPL_AWAY " + nickname + " :" + away_message +"\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
+
+void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users *users_list)
+{
+    std::cout << nickname << std::endl;
+    std::string message = "= " + chan->name + ": " + "@" + nickname + "\n";
+    send(socket, message.c_str(), message.length(), 0);
+    for (int i = 0; i < chan->nb_users; i++)
+    {
+        message = "@ " + get_user(chan->users_id[i], users_list)->nickname + "\n";
+        send(socket, message.c_str(), message.length(), 0);
+    }
+}
+
+void    send_rpl_topic(channel *chan, int socket)
+{
+    std::string message;
+    if (chan->topic == "Default Topic")
+        message = chan->name + " :" + "No topic is set\n";
+    else
+        message = chan->name + " :" + chan->topic + "\n";
+    send(socket, message.c_str(), message.length(), 0);
+}

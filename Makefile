@@ -1,4 +1,4 @@
-SRCS = srcs/main.cpp srcs/users.cpp srcs/utils.cpp srcs/response.cpp srcs/commands.cpp srcs/server.cpp srcs/check.cpp
+SRCS = srcs/main.cpp srcs/users.cpp srcs/utils.cpp srcs/response.cpp srcs/commands.cpp srcs/server.cpp srcs/check.cpp srcs/channels.cpp
 ODIR = .obj
 OBJS = $(addprefix $(ODIR)/, $(SRCS:.cpp=.o))
 DEP = $(OBJS:.o=.d)
