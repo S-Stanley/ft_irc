@@ -57,13 +57,13 @@ void	send_err_cannot_send_to_chan(int socket, std::string channel_name)
 
 void	send_message_to_user(int socket, std::string nickname, std::string message_to_send)
 {
-	std::string message = ":127.0.0.1 stan!stan@127.0.0.1 PRIVMSG " + nickname + " :" + message_to_send + "\r\n";
+	std::string message = ":127.0.0.1 stan!stan@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
 void	send_away_message_to_user(int socket, std::string nickname, std::string away_message)
 {
-	std::string message = ":stan!stan@127.0.0.1 301 RPL_AWAY " + nickname + " :" + away_message +"\r\n";
+	std::string message = ":127.0.0.1 301 RPL_AWAY :" + nickname + " :" + away_message + "\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
@@ -105,4 +105,16 @@ void    send_need_more_params(std::string command, int socket)
 {
     std::string message = ":127.0.0.1 461 ERR_NEEDMOREPARAMS " + command + " :Not enough parameters\r\n";
     send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_away_message(int socket)
+{
+	std::string message = ":127.0.0.1 306 RPL_NOWAWAY :You have been marked as being away\r\n";
+	send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_back_from_away_message(int socket)
+{
+	std::string message = ":127.0.0.1 305 RPL_UNAWAY :You are no longer marked as being away\r\n";
+	send(socket, message.c_str(), message.length(), 0);
 }

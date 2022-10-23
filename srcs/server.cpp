@@ -101,6 +101,26 @@ bool    Server::exec(std::string *all, unsigned int i)
                 value[1],
                 value[2]
             );
+            if (value[0] == "PRIVMSG" && is_user_away(find_user_by_nickname(value[1], all_users)->user_id, all_users))
+            {
+                send_away_message_to_user(
+                    fds[i].fd, value[1],
+                    get_user(find_user_by_nickname(value[1], all_users)->user_id, all_users)->away_message
+                );
+            }
+        }
+        if (value[0] == "AWAY")
+        {
+            if (value[1].empty())
+            {
+                set_user_back_from_away(i -1, all_users);
+                send_back_from_away_message(fds[i].fd);
+            }
+            else
+            {
+                set_user_away(i - 1, all_users, value[1]);
+                send_away_message(fds[i].fd);
+            }
         }
         if (value[0] == "JOIN")
         {
