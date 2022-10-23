@@ -130,3 +130,50 @@ users   *find_user_by_nickname(std::string nickname, users *lst)
     }
     return (NULL);
 }
+
+users   *set_user_away(int user_id, users *lst, std::string away_message)
+{
+    users   *tmp = lst;
+
+    while (tmp)
+    {
+        if (tmp->user_id == (unsigned int)user_id)
+        {
+            tmp->away = true;
+            tmp->away_message = away_message;
+        }
+        tmp = tmp->next;
+    }
+    return (lst);
+}
+
+users   *set_user_back_from_away(int user_id, users *lst)
+{
+    users   *tmp = lst;
+
+    while (tmp)
+    {
+        if (tmp->user_id == (unsigned int)user_id)
+            tmp->away = true;
+        tmp = tmp->next;
+    }
+    return (lst);
+}
+
+bool    is_user_away(int user_id, users *lst)
+{
+    users   *tmp = lst;
+
+    while (tmp)
+    {
+        if (tmp->user_id == (unsigned int)user_id)
+        {
+            if (tmp->away == true)
+                return (true);
+            else
+                return (false);
+        }
+        tmp = tmp->next;
+    }
+    return (false);
+}
