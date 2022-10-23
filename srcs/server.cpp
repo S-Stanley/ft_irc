@@ -86,7 +86,7 @@ bool    Server::exec(std::string *all, unsigned int i)
         }
         if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
         {
-            if (!find_user_by_nickname(value[1], all_users))
+            if (!find_user_by_nickname(value[1], all_users) && !find_channel(value[1], channels))
             {
                 send_no_such_nick(fds[i].fd, value[1]);
                 return (true);
@@ -96,15 +96,34 @@ bool    Server::exec(std::string *all, unsigned int i)
                 send_no_text(fds[i].fd);
                 return (true);
             }
-            send_message_to_user(
-                fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
-                value[1],
-                value[2]
-            );
-            if (value[0] == "PRIVMSG" && is_user_away(find_user_by_nickname(value[1], all_users)->user_id, all_users))
+            if (find_user_by_nickname(value[1], all_users))
+            {
+                send_message_to_user(
+                    fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
+                    value[1],
+                    value[2],
+                    get_user(i - 1, all_users)
+                );
+            } else {
+                channel *chan = find_channel(value[1], channels);
+                for (int it = 0; it < (chan->nb_users); it++)
+                {
+                    if ((unsigned int)it != i -1)
+                    {
+                        send_message_to_user(
+                            fds[chan->users_id[it] + 1].fd,
+                            value[1],
+                            value[2],
+                            get_user(i - 1, all_users)
+                        );
+                    }
+                }
+            }
+            if (value[0] == "PRIVMSG" && find_user_by_nickname(value[1], all_users) && is_user_away(find_user_by_nickname(value[1], all_users)->user_id, all_users))
             {
                 send_away_message_to_user(
-                    fds[i].fd, value[1],
+                    fds[i].fd,
+                    value[1],
                     get_user(find_user_by_nickname(value[1], all_users)->user_id, all_users)->away_message
                 );
             }
@@ -131,6 +150,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             }
             channel *chan;
 
+            std::cout << "channel to find -> " << value[1] << std::endl;
             if (channel_exists(value[1], channels) == false)
             {
                 chan = create_channel(value[1], "Default Topic");
@@ -148,6 +168,16 @@ bool    Server::exec(std::string *all, unsigned int i)
                 }
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
                 chan->nb_users++;
+
+                for (int it = 0; it < (chan->nb_users); it++)
+                {
+                    send_user_joined_channel(
+                        fds[chan->users_id[it]].fd,
+                        get_user(i -1, all_users)->nickname,
+                        get_user(i -1, all_users)->username,
+                        value[1]
+                    );
+                }
             }
             send_rpl_topic(chan, fds[i].fd);
             send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);

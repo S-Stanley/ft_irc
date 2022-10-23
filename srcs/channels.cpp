@@ -27,15 +27,15 @@ channel *find_channel(std::string name, channel *channels)
 {
     channel *tmp = channels;
 
-    while (tmp->next)
+    if (!channels)
+        return (NULL);
+    while (tmp)
     {
         if (tmp->name == name)
-        {
             return (tmp);
-        }
         tmp = tmp->next;
     }
-    return (tmp);
+    return (NULL);
 }
 
 channel *create_channel(std::string name, std::string topic)
