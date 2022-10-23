@@ -39,11 +39,11 @@ void    check_password(users *all_users, pollfd *fds, std::string *value, char *
 {
     if (get_user(i - 1, all_users)->connected)
     {
-        send(fds[i].fd, "ERR_ALREADYREGISTRED\n", strlen("ERR_ALREADYREGISTRED\n"), 0);
+        send_already_registred(fds[i].fd);
     }
     else if (value[1].empty())
     {
-        send(fds[i].fd, "ERR_NEEDMOREPARAMS\n", strlen("ERR_NEEDMOREPARAMS\n"), 0);
+        send_need_more_params(value[0], fds[i].fd);
     }
     else if (!value[2].empty())
     {

@@ -25,5 +25,6 @@ void    send_not_on_channel(std::string channel_name, int socket);
 void    send_need_more_params(std::string command, int socket);
 void    send_away_message(int socket);
 void    send_back_from_away_message(int socket);
+void    send_already_registred(int socket);
 
 #endif

@@ -118,3 +118,9 @@ void    send_back_from_away_message(int socket)
 	std::string message = ":127.0.0.1 305 RPL_UNAWAY :You are no longer marked as being away\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
+
+void    send_already_registred(int socket)
+{
+    std::string message = ":127.0.0.1 462 ERR_ALREADYREGISTRED :Unauthorized command (already registered)\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
