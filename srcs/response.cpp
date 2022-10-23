@@ -70,7 +70,7 @@ void	send_away_message_to_user(int socket, std::string nickname, std::string awa
 void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users *users_list)
 {
     std::cout << nickname << std::endl;
-    std::string message = "= " + chan->name + ": " + "@" + nickname + "\n";
+    std::string message = ":127.0.0.1 353 RPL_NAMREPLY =" + chan->name + ": " + "@" + nickname + "\r\n";
     send(socket, message.c_str(), message.length(), 0);
     for (int i = 0; i < chan->nb_users; i++)
     {
@@ -83,8 +83,26 @@ void    send_rpl_topic(channel *chan, int socket)
 {
     std::string message;
     if (chan->topic == "Default Topic")
-        message = chan->name + " :" + "No topic is set\n";
+        message = ":127.0.0.1 331 RPL_NOTOPIC " + chan->name + " :No topic is set\r\n";
     else
-        message = chan->name + " :" + chan->topic + "\n";
+        message = ":127.0.0.1 332 RPL_TOPIC " + chan->name + " " + chan->topic + "\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_no_such_channel(std::string channel_name, int socket)
+{
+    std::string message = ":127.0.0.1 403 ERR_NOSUCHCHANNEL " + channel_name + " :No such channel\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_not_on_channel(std::string channel_name, int socket)
+{
+    std::string message = ":127.0.0.1 442 ERR_NOTONCHANNEL " + channel_name + " :You're not on that channel\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_need_more_params(std::string command, int socket)
+{
+    std::string message = ":127.0.0.1 461 ERR_NEEDMOREPARAMS " + command + " :Not enough parameters\r\n";
     send(socket, message.c_str(), message.length(), 0);
 }

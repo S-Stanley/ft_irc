@@ -14,10 +14,11 @@ struct channel
 	struct channel	*next;
 };
 
-channel*						create_channel(std::string name, std::string topic);
-channel*						add_new_channel(channel *channels, channel *new_channel);
-bool							channel_exists(std::string name, channel *channels);
-channel*						find_channel(std::string name, channel *channels);
-void							display_channel_users(channel *channel);
+channel*	create_channel(std::string name, std::string topic);
+channel*	add_new_channel(channel *channels, channel *new_channel);
+bool		channel_exists(std::string name, channel *channels);
+channel*	find_channel(std::string name, channel *channels);
+void		display_channel_users(channel *channel);
+int			find_channel_user(channel *chan, users *user);
 
 #endif

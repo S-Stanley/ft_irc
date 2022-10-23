@@ -20,5 +20,8 @@ void	send_message_to_user(int socket, std::string nickname, std::string message_
 void	send_away_message_to_user(int socket, std::string nickname, std::string away_message);
 void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users *users_list);
 void    send_rpl_topic(channel *chan, int socket);
+void    send_no_such_channel(std::string channel_name, int socket);
+void    send_not_on_channel(std::string channel_name, int socket);
+void    send_need_more_params(std::string command, int socket);
 
 #endif

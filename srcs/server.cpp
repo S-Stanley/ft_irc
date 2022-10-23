@@ -104,7 +104,13 @@ bool    Server::exec(std::string *all, unsigned int i)
         }
         if (value[0] == "JOIN")
         {
+            if (value[1].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
             channel *chan;
+
             if (channel_exists(value[1], channels) == false)
             {
                 chan = create_channel(value[1], "Default Topic");
@@ -117,10 +123,46 @@ bool    Server::exec(std::string *all, unsigned int i)
             else
             {
                 chan = find_channel(value[1], channels);
+                if (find_channel_user(chan, get_user(i -1, all_users)) != -1)
+                {
+                    std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
+                    return (true);
+                }
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
                 chan->nb_users++;
                 send_rpl_topic(chan, fds[i].fd);
                 send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
+            }
+        }
+        if (value[0] == "PART")
+        {
+            if (value[1].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
+            channel *chan;
+
+            if (channel_exists(value[1], channels))
+            {
+                chan = find_channel(value[1], channels);
+                int u = find_channel_user(chan, get_user(i -1, all_users));
+                if (u == -1)
+                {
+                    send_not_on_channel(chan->name, fds[i].fd);
+                    return (true);
+                }
+                else
+                {
+                    for (int i = u; i < chan->nb_users; ++i)
+                        chan->users_id[i] = chan->users_id[i + 1];
+                    chan->nb_users--;
+                }
+            }
+            else
+            {
+                send_no_such_channel(value[1], fds[i].fd);
+                return (true);
             }
         }
         if (value[0] == "SHUTDOWN")

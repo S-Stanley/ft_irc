@@ -72,3 +72,15 @@ void    display_channel_users(channel *chan)
         i++;
     }
 }
+
+int find_channel_user(channel *chan, users *user)
+{
+    for (int i = 0; i < chan->nb_users; i++)
+    {
+        if ((unsigned int)chan->users_id[i] == user->user_id)
+        {
+            return (i);
+        }
+    }
+    return (-1);
+}
