@@ -4,7 +4,7 @@ Server::Server(void)
 {
     this->all_users = NULL;
     this->channels = NULL;
-    return ;
+    this->number_of_socket = 1;
 }
 
 void    Server::set_config(int port, char *password)
@@ -218,6 +218,13 @@ bool    Server::exec(std::string *all, unsigned int i)
             delete[] value;
             return (false);
         }
+        if (value[0] == "QUIT")
+        {
+            send_user_quit_answer(fds[i].fd);
+            all_users = delete_user_from_list(i - 1, all_users);
+            number_of_socket--;
+            close(fds[i].fd);
+        }
         delete[] value;
     }
     return (true);
@@ -228,17 +235,19 @@ void    Server::run(void)
     int             rc;
     int             nfds = 1;
     int             new_socket[200];
-    int             socket_id = 0;
+    int             socket_id;
     bool            server_should_stop = true;
     unsigned int    i = 0;
     int             addrlen = sizeof(address);
     int             throw_err_password = true;
+    users           *usr = NULL;
 
     while (true)
     {
 
+        socket_id = number_of_socket - 1;
         read_all_users(all_users);
-        rc = poll(fds, nfds, -1);
+        rc = poll(fds, number_of_socket, -1);
 
         if (rc < 0)
             std::cout << "poll failed" << std::endl;
@@ -252,6 +261,7 @@ void    Server::run(void)
                     perror("accept");
                     exit(EXIT_FAILURE);
                 }
+                number_of_socket++;
                 all_users = add_user(all_users, new_user(socket_id, "", ""));
                 fds[nfds].fd = new_socket[socket_id];
                 fds[nfds].events = POLLIN;
@@ -270,7 +280,8 @@ void    Server::run(void)
                         std::string *all = get_commands(fds, i);
                         for (int x = 0; x < (int)all->length(); x++)
                         {
-                            if (all[x].find("PASS") != std::string::npos || get_user(i - 1, all_users)->connected == true)
+                            usr = get_user(i - 1, all_users);
+                            if (all[x].find("PASS") != std::string::npos || (usr && usr->connected == true))
                             {
                                 throw_err_password = false;
                                 break;

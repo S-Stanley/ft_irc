@@ -37,7 +37,9 @@ int check_args(int argc, char **argv)
 
 void    check_password(users *all_users, pollfd *fds, std::string *value, char *password, unsigned int i)
 {
-    if (get_user(i - 1, all_users)->connected)
+    users   *usr = get_user(i - 1, all_users);
+
+    if (usr && usr->connected)
     {
         send_already_registred(fds[i].fd);
     }

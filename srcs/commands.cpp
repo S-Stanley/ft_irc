@@ -9,6 +9,7 @@ std::string *get_commands(struct pollfd *fds, int i)
 
     valread = read(fds[i].fd, (char *)buffer, 1024);
     buffer[valread] = 0;
+    std::cout << buffer << std::endl;
     std::string *tmp = split(buffer, "\n");
     for (int it = 0; it < (int)tmp->length(); it++)
     {

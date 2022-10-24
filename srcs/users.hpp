@@ -27,5 +27,6 @@ users   *find_user_by_nickname(std::string nickname, users *lst);
 users   *set_user_away(int user_id, users *lst, std::string away_message);
 users   *set_user_back_from_away(int user_id, users *lst);
 bool    is_user_away(int user_id, users *lst);
+users   *delete_user_from_list(int user_id, users *lst);
 
 #endif
