@@ -2,7 +2,7 @@
 
 void	send_connection_ok(int socket, std::string nickname)
 {
-	std::string message = ":127.0.0.1 001 RPL_WELCOME" + nickname + " :Welcome to the Internet Relay Network\r\n";
+	std::string message = ":127.0.0.1 001 RPL_WELCOME " + nickname + " :Welcome to the Internet Relay Network\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
@@ -55,9 +55,9 @@ void	send_err_cannot_send_to_chan(int socket, std::string channel_name)
 	send(socket, message.c_str(), message.length(), 0);
 }
 
-void	send_message_to_user(int socket, std::string nickname, std::string message_to_send)
+void	send_message_to_user(int socket, std::string nickname, std::string message_to_send, users *sender)
 {
-	std::string message = ":127.0.0.1 stan!stan@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
+	std::string message = ":" + sender->nickname + "!" + sender->username + "@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
@@ -69,14 +69,21 @@ void	send_away_message_to_user(int socket, std::string nickname, std::string awa
 
 void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users *users_list)
 {
-    std::cout << nickname << std::endl;
-    std::string message = ":127.0.0.1 353 RPL_NAMREPLY =" + chan->name + ": " + "@" + nickname + "\r\n";
-    send(socket, message.c_str(), message.length(), 0);
+    std::string all_names;
+
     for (int i = 0; i < chan->nb_users; i++)
     {
-        message = "@ " + get_user(chan->users_id[i], users_list)->nickname + "\n";
-        send(socket, message.c_str(), message.length(), 0);
+        if (i == 0)
+            all_names = all_names.insert(all_names.length(), get_user(chan->users_id[i], users_list)->nickname);
+        else
+            all_names = all_names.insert(all_names.length(), " " + get_user(chan->users_id[i], users_list)->nickname);
     }
+
+    std::string message = ":127.0.0.1 353 RPL_NAMREPLY " + nickname + " = " + chan->name + " :" + all_names + "\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+
+    std::string end_of_name_message = ":127.0.0.1 366 RPL_ENDOFNAMES " + nickname + " " + chan->name + " :End of NAMES list\r\n";
+    send(socket, end_of_name_message.c_str(), end_of_name_message.length(), 0);
 }
 
 void    send_rpl_topic(channel *chan, int socket)
@@ -86,6 +93,12 @@ void    send_rpl_topic(channel *chan, int socket)
         message = ":127.0.0.1 331 RPL_NOTOPIC " + chan->name + " :No topic is set\r\n";
     else
         message = ":127.0.0.1 332 RPL_TOPIC " + chan->name + " " + chan->topic + "\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_user_joined_channel(int socket, std::string nickname, std::string username, std::string channel_name)
+{
+    std::string message = ":" + nickname + "!" + username + "@127.0.0.1 JOIN " + channel_name + "\r\n";
     send(socket, message.c_str(), message.length(), 0);
 }
 
