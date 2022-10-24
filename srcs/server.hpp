@@ -34,6 +34,7 @@ class Server {
         struct pollfd       fds[200];
         users               *all_users;
         channel             *channels;
+        int                 number_of_socket;
 };
 
 #endif

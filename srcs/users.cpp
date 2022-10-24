@@ -177,3 +177,28 @@ bool    is_user_away(int user_id, users *lst)
     }
     return (false);
 }
+
+users   *delete_user_from_list(int user_id, users *lst)
+{
+    users   *tmp = lst;
+    users   *previous = NULL;
+
+    while (tmp)
+    {
+        if (tmp->user_id == (unsigned int)user_id)
+        {
+            if (previous == NULL)
+            {
+                delete tmp;
+                return (NULL);
+            }
+            previous->next = tmp->next;
+            delete tmp;
+            return (lst);
+        }
+        previous = tmp;
+        tmp = tmp->next;
+    }
+
+    return (lst);
+}
