@@ -2,6 +2,7 @@
 # define USER_HPP
 
 #include <iostream>
+#define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
 struct users {
     unsigned int    user_id;

@@ -49,6 +49,16 @@ void    Server::setup(void)
     fds[0].events = POLLIN;
 }
 
+void    Server::update_fds_all_users(int user_id)
+{
+    for (int i = user_id; i < number_of_socket; ++i)
+    {
+        fds[i] = fds[i + 1];
+        if (get_user(i, all_users))
+            get_user(i, all_users)->user_id--;
+    }
+}
+
 bool    Server::exec(std::string *all, unsigned int i)
 {
     for (int x = 0; x < (int)all->length(); x++)
@@ -226,6 +236,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 return (true);
             }
             get_user(i -1, all_users)->is_operator = true;
+            send_youre_oper(fds[i].fd);
         }
         if (value[0] == "KILL")
         {
@@ -248,6 +259,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             close(fds[user_to_kill->user_id + 1].fd);
             unavailable_nicknames.push_back(user_to_kill->nickname);
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
+            update_fds_all_users(i);
             number_of_socket--;
         }
         if (value[0] == "SHUTDOWN")
@@ -259,8 +271,9 @@ bool    Server::exec(std::string *all, unsigned int i)
         {
             send_user_quit_answer(fds[i].fd);
             all_users = delete_user_from_list(i - 1, all_users);
-            number_of_socket--;
             close(fds[i].fd);
+            update_fds_all_users(i);
+            number_of_socket--;
         }
         delete[] value;
     }

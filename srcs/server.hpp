@@ -27,6 +27,7 @@ class Server {
         void    run(void);
         void    setup(void);
         bool    exec(std::string *all, unsigned int i);
+        void    update_fds_all_users(int user_id);
     private:
         struct sockaddr_in  address;
         int                 server_fd;

@@ -190,6 +190,12 @@ users   *delete_user_from_list(int user_id, users *lst)
         {
             if (previous == NULL)
             {
+                if (tmp->next)
+                {
+                    users *next = tmp->next;
+                    delete tmp;
+                    return (next);
+                }
                 delete tmp;
                 return (NULL);
             }
