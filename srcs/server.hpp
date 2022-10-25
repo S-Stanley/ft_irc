@@ -16,6 +16,7 @@
 #include "commands.hpp"
 #include "check.hpp"
 #include "channels.hpp"
+#include <vector>
 
 class Server {
     public:
@@ -26,6 +27,7 @@ class Server {
         void    run(void);
         void    setup(void);
         bool    exec(std::string *all, unsigned int i);
+        void    update_fds_all_users(int user_id);
     private:
         struct sockaddr_in  address;
         int                 server_fd;
@@ -33,6 +35,7 @@ class Server {
         int                 port;
         struct pollfd       fds[200];
         users               *all_users;
+        std::vector<std::string> unavailable_nicknames;
         channel             *channels;
         int                 number_of_socket;
 };

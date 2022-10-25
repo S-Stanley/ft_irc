@@ -143,3 +143,17 @@ void    send_user_quit_answer(int socket)
     std::string message = ":127.0.0.1 ERROR :user quitted the server\r\n";
     send(socket, message.c_str(), message.length(), 0);
 }
+
+void    send_no_privileges(int socket)
+{
+    std::string message = ":127.0.0.1 481 ERR_NOPRIVILEGES :Permission Denied- You're not an IRC operator\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+void    send_youre_oper(int socket)
+{
+    std::string message = ":127.0.0.1 381 RPL_YOUREOPER :You are now an IRC operator\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
+

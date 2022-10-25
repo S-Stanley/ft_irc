@@ -49,6 +49,18 @@ void    Server::setup(void)
     fds[0].events = POLLIN;
 }
 
+void    Server::update_fds_all_users(int user_id)
+{
+    for (int i = user_id; i < number_of_socket; ++i)
+    {
+        fds[i] = fds[i + 1];
+        if (get_user(i, all_users))
+		{
+            get_user(i, all_users)->user_id--;
+		}
+    }
+}
+
 bool    Server::exec(std::string *all, unsigned int i)
 {
     for (int x = 0; x < (int)all->length(); x++)
@@ -65,7 +77,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 delete[] value;
                 continue;
             }
-            if (is_nickname_available(all_users, value[1]))
+            if (is_nickname_available(all_users, value[1]) && !is_banned_nickname(value[1], unavailable_nicknames))
                 all_users = set_user_nickname(all_users, i -1, value[1]);
             else
                 send_nickname_already_used(fds[i].fd, value[1]);
@@ -213,6 +225,47 @@ bool    Server::exec(std::string *all, unsigned int i)
                 return (true);
             }
         }
+        if (value[0] == "OPER")                         // Pour l'instant tout le monde peut devenir operator
+        {
+            if (value[1].empty() || value[2].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
+            else if (get_user(i -1, all_users)->is_operator)
+            {
+                // Déjà operator
+                return (true);
+            }
+            get_user(i -1, all_users)->is_operator = true;
+            send_youre_oper(fds[i].fd);
+        }
+        if (value[0] == "KILL")
+        {
+            users *user_to_kill;
+            int update_at;
+            if (value[1].empty() || value[2].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
+            else if (get_user(i -1, all_users)->is_operator == false)
+            {
+                send_no_privileges(fds[i].fd);
+                return (true);
+            }
+            else if (!(user_to_kill = find_user_by_nickname(value[1], all_users)))
+            {
+                send_no_such_nick(fds[i].fd, value[1]);
+                return (true);
+            }
+            update_at = user_to_kill->user_id;
+            close(fds[user_to_kill->user_id + 1].fd);
+            unavailable_nicknames.push_back(user_to_kill->nickname);
+            all_users = delete_user_from_list(user_to_kill->user_id, all_users);
+            number_of_socket--;
+            update_fds_all_users(update_at);
+        }
         if (value[0] == "SHUTDOWN")
         {
             delete[] value;
@@ -222,8 +275,9 @@ bool    Server::exec(std::string *all, unsigned int i)
         {
             send_user_quit_answer(fds[i].fd);
             all_users = delete_user_from_list(i - 1, all_users);
-            number_of_socket--;
             close(fds[i].fd);
+            number_of_socket--;
+            update_fds_all_users(i);
         }
         delete[] value;
     }
@@ -274,6 +328,7 @@ void    Server::run(void)
                 i = 0;
                 while (i < (unsigned int)nfds)
                 {
+                    throw_err_password = true;
                     i++;
                     if (fds[i].revents == 1)
                     {
@@ -287,7 +342,7 @@ void    Server::run(void)
                                 break;
                             }
                         }
-                        if (throw_err_password)
+                        if (throw_err_password && get_user(i - 1, all_users)->connected == false)
                         {
                             send_err_password(fds[i].fd);
                             throw_err_password = true;

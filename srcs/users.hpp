@@ -2,6 +2,7 @@
 # define USER_HPP
 
 #include <iostream>
+#define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
 struct users {
     unsigned int    user_id;
@@ -9,6 +10,7 @@ struct users {
     std::string     username;
     bool            authentificate;
     bool            connected;
+    bool            is_operator;
     bool            away;
     std::string     away_message;
     struct users    *next;
