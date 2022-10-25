@@ -61,3 +61,13 @@ void    check_password(users *all_users, pollfd *fds, std::string *value, char *
         send(fds[i].fd, "Password OK\n", strlen("Password OK\n"), 0);
     }
 }
+
+bool    is_banned_nickname(std::string nickname, std::vector<std::string> unavailable_nicks)
+{
+    for (unsigned int i = 0; i < unavailable_nicks.size(); i++)
+    {
+        if (unavailable_nicks[i] == nickname)
+            return (true);
+    }
+    return (false);
+}

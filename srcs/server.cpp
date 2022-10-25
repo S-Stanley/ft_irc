@@ -65,7 +65,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 delete[] value;
                 continue;
             }
-            if (is_nickname_available(all_users, value[1]))
+            if (is_nickname_available(all_users, value[1]) && !is_banned_nickname(value[1], unavailable_nicknames))
                 all_users = set_user_nickname(all_users, i -1, value[1]);
             else
                 send_nickname_already_used(fds[i].fd, value[1]);
@@ -246,6 +246,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 return (true);
             }
             close(fds[user_to_kill->user_id + 1].fd);
+            unavailable_nicknames.push_back(user_to_kill->nickname);
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
             number_of_socket--;
         }

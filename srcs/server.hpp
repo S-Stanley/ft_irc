@@ -16,6 +16,7 @@
 #include "commands.hpp"
 #include "check.hpp"
 #include "channels.hpp"
+#include <vector>
 
 class Server {
     public:
@@ -33,6 +34,7 @@ class Server {
         int                 port;
         struct pollfd       fds[200];
         users               *all_users;
+        std::vector<std::string> unavailable_nicknames;
         channel             *channels;
         int                 number_of_socket;
 };
