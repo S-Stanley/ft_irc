@@ -55,7 +55,9 @@ void    Server::update_fds_all_users(int user_id)
     {
         fds[i] = fds[i + 1];
         if (get_user(i, all_users))
+		{
             get_user(i, all_users)->user_id--;
+		}
     }
 }
 
@@ -241,6 +243,7 @@ bool    Server::exec(std::string *all, unsigned int i)
         if (value[0] == "KILL")
         {
             users *user_to_kill;
+            int update_at;
             if (value[1].empty() || value[2].empty())
             {
                 send_need_more_params(value[0], fds[i].fd);
@@ -256,11 +259,12 @@ bool    Server::exec(std::string *all, unsigned int i)
                 send_no_such_nick(fds[i].fd, value[1]);
                 return (true);
             }
+            update_at = user_to_kill->user_id;
             close(fds[user_to_kill->user_id + 1].fd);
             unavailable_nicknames.push_back(user_to_kill->nickname);
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
-            update_fds_all_users(i);
             number_of_socket--;
+            update_fds_all_users(update_at);
         }
         if (value[0] == "SHUTDOWN")
         {
@@ -272,8 +276,8 @@ bool    Server::exec(std::string *all, unsigned int i)
             send_user_quit_answer(fds[i].fd);
             all_users = delete_user_from_list(i - 1, all_users);
             close(fds[i].fd);
-            update_fds_all_users(i);
             number_of_socket--;
+            update_fds_all_users(i);
         }
         delete[] value;
     }
