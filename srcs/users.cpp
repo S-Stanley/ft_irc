@@ -9,6 +9,7 @@ users   *new_user(int user_id, std::string nickname, std::string username)
     new_user->username = username;
     new_user->authentificate = false;
     new_user->connected = false;
+    new_user->is_operator = false;
     new_user->next = NULL;
     return (new_user);
 }

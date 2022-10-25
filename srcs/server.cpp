@@ -213,6 +213,42 @@ bool    Server::exec(std::string *all, unsigned int i)
                 return (true);
             }
         }
+        if (value[0] == "OPER")                         // Pour l'instant tout le monde peut devenir operator
+        {
+            if (value[1].empty() || value[2].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
+            else if (get_user(i -1, all_users)->is_operator)
+            {
+                // Déjà operator
+                return (true);
+            }
+            get_user(i -1, all_users)->is_operator = true;
+        }
+        if (value[0] == "KILL")
+        {
+            users *user_to_kill;
+            if (value[1].empty() || value[2].empty())
+            {
+                send_need_more_params(value[0], fds[i].fd);
+                return (true);
+            }
+            else if (get_user(i -1, all_users)->is_operator == false)
+            {
+                send_no_privileges(fds[i].fd);
+                return (true);
+            }
+            else if (!(user_to_kill = find_user_by_nickname(value[1], all_users)))
+            {
+                send_no_such_nick(fds[i].fd, value[1]);
+                return (true);
+            }
+            close(fds[user_to_kill->user_id + 1].fd);
+            all_users = delete_user_from_list(user_to_kill->user_id, all_users);
+            number_of_socket--;
+        }
         if (value[0] == "SHUTDOWN")
         {
             delete[] value;
@@ -274,6 +310,7 @@ void    Server::run(void)
                 i = 0;
                 while (i < (unsigned int)nfds)
                 {
+                    throw_err_password = true;
                     i++;
                     if (fds[i].revents == 1)
                     {
@@ -287,7 +324,7 @@ void    Server::run(void)
                                 break;
                             }
                         }
-                        if (throw_err_password)
+                        if (throw_err_password && get_user(i - 1, all_users)->connected == false)
                         {
                             send_err_password(fds[i].fd);
                             throw_err_password = true;

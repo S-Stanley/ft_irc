@@ -28,5 +28,6 @@ void    send_back_from_away_message(int socket);
 void    send_already_registred(int socket);
 void    send_user_joined_channel(int socket, std::string nickname, std::string username, std::string channel_name);
 void    send_user_quit_answer(int socket);
+void    send_no_privileges(int socket);
 
 #endif
