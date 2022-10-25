@@ -240,7 +240,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             get_user(i -1, all_users)->is_operator = true;
             send_youre_oper(fds[i].fd);
         }
-        if (value[0] == "KILL")
+        if (value[0] == "KILL" || value[0] == "kill")
         {
             users *user_to_kill;
             int update_at;
