@@ -5,6 +5,7 @@ Server::Server(void)
     this->all_users = NULL;
     this->channels = NULL;
     this->number_of_socket = 1;
+	this->nfds = 1;
 }
 
 void    Server::set_config(int port, char *password)
@@ -184,7 +185,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 for (int it = 0; it < (chan->nb_users); it++)
                 {
                     send_user_joined_channel(
-                        fds[chan->users_id[it]].fd,
+                        fds[chan->users_id[it] + 1].fd,
                         get_user(i -1, all_users)->nickname,
                         get_user(i -1, all_users)->username,
                         value[1]
@@ -265,6 +266,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
             number_of_socket--;
             update_fds_all_users(update_at);
+			nfds--;
         }
         if (value[0] == "SHUTDOWN")
         {
@@ -278,6 +280,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             close(fds[i].fd);
             number_of_socket--;
             update_fds_all_users(i);
+			nfds--;
         }
         delete[] value;
     }
@@ -287,7 +290,6 @@ bool    Server::exec(std::string *all, unsigned int i)
 void    Server::run(void)
 {
     int             rc;
-    int             nfds = 1;
     int             new_socket[200];
     int             socket_id;
     bool            server_should_stop = true;

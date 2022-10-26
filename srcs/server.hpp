@@ -38,6 +38,7 @@ class Server {
         std::vector<std::string> unavailable_nicknames;
         channel             *channels;
         int                 number_of_socket;
+        int                 nfds;
 };
 
 #endif
