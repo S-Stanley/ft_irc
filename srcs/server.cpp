@@ -62,228 +62,270 @@ void    Server::update_fds_all_users(int user_id)
     }
 }
 
+void    Server::exec_pass(std::string *value, unsigned int i)
+{
+    check_password(all_users, fds, value, password, i);
+}
+
+bool    Server::exec_nick(std::string *value, unsigned int i)
+{
+    if (get_user(i - 1, all_users)->connected == false)
+    {
+        delete[] value;
+        return (true);
+    }
+    if (is_nickname_available(all_users, value[1]) && !is_banned_nickname(value[1], unavailable_nicknames))
+        all_users = set_user_nickname(all_users, i -1, value[1]);
+    else
+        send_nickname_already_used(fds[i].fd, value[1]);
+    return (false);
+}
+
+bool    Server::exec_user(std::string *value, unsigned int i)
+{
+    if (get_user(i - 1, all_users)->connected == false)
+    {
+        delete[] value;
+        return (true);
+    }
+    all_users = set_user_username(all_users, i -1, value[1]);
+    if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
+    {
+        set_user_authentificate(i -1, all_users);
+        send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
+    }
+    return (false);
+}
+
+bool    Server::exec_msg(std::string *value, unsigned int i)
+{
+    if (!find_user_by_nickname(value[1], all_users) && !find_channel(value[1], channels))
+    {
+        send_no_such_nick(fds[i].fd, value[1]);
+        return (true);
+    }
+    if (value->length() == 2)
+    {
+        send_no_text(fds[i].fd);
+        return (true);
+    }
+    if (find_user_by_nickname(value[1], all_users))
+    {
+        send_message_to_user(
+            fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
+            value[1],
+            value[2],
+            get_user(i - 1, all_users)
+        );
+    } else {
+        channel *chan = find_channel(value[1], channels);
+        for (int it = 0; it < (chan->nb_users); it++)
+        {
+            if ((unsigned int)it != i -1)
+            {
+                send_message_to_user(
+                    fds[chan->users_id[it] + 1].fd,
+                    value[1],
+                    value[2],
+                    get_user(i - 1, all_users)
+                );
+            }
+        }
+    }
+    if (value[0] == "PRIVMSG" && find_user_by_nickname(value[1], all_users) && is_user_away(find_user_by_nickname(value[1], all_users)->user_id, all_users))
+    {
+        send_away_message_to_user(
+            fds[i].fd,
+            value[1],
+            get_user(find_user_by_nickname(value[1], all_users)->user_id, all_users)->away_message
+        );
+    }
+    return (false);
+}
+
+void    Server::exec_away(std::string *value, unsigned int i)
+{
+    if (value[1].empty())
+    {
+        set_user_back_from_away(i -1, all_users);
+        send_back_from_away_message(fds[i].fd);
+    }
+    else
+    {
+        set_user_away(i - 1, all_users, value[1]);
+        send_away_message(fds[i].fd);
+    }
+}
+
+bool    Server::exec_join(std::string *value, unsigned int i)
+{
+    if (value[1].empty())
+    {
+        send_need_more_params(value[0], fds[i].fd);
+        return (true);
+    }
+    channel *chan;
+
+    std::cout << "channel to find -> " << value[1] << std::endl;
+    if (channel_exists(value[1], channels) == false)
+    {
+        chan = create_channel(value[1], "Default Topic");
+        chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+        chan->nb_users++;
+        channels = add_new_channel(channels, chan);
+    }
+    else
+    {
+        chan = find_channel(value[1], channels);
+        if (find_channel_user(chan, get_user(i -1, all_users)->user_id) != -1)
+        {
+            std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
+            return (true);
+        }
+        chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+        chan->nb_users++;
+
+        for (int it = 0; it < (chan->nb_users); it++)
+        {
+            send_user_joined_channel(
+                fds[chan->users_id[it] + 1].fd,
+                get_user(i -1, all_users)->nickname,
+                get_user(i -1, all_users)->username,
+                value[1]
+            );
+        }
+    }
+    send_rpl_topic(chan, fds[i].fd);
+    send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
+    return (false);
+}
+
+bool    Server::exec_part(std::string *value, unsigned int i)
+{
+    if (value[1].empty())
+    {
+        send_need_more_params(value[0], fds[i].fd);
+        return (true);
+    }
+    channel *chan;
+
+    if (channel_exists(value[1], channels))
+    {
+        chan = find_channel(value[1], channels);
+        int u = find_channel_user(chan, get_user(i -1, all_users)->user_id);
+        if (u == -1)
+        {
+            send_not_on_channel(chan->name, fds[i].fd);
+            return (true);
+        }
+        else
+        {
+            for (int i = u; i < chan->nb_users; ++i)
+                chan->users_id[i] = chan->users_id[i + 1];
+            chan->nb_users--;
+        }
+    }
+    send_no_such_channel(value[1], fds[i].fd);
+    return (true);
+}
+
+bool    Server::exec_oper(std::string *value, unsigned int i)
+{
+    if (value[1].empty() || value[2].empty())
+    {
+        send_need_more_params(value[0], fds[i].fd);
+        return (true);
+    }
+    else if (get_user(i -1, all_users)->is_operator)
+    {
+        // Déjà operator
+        return (true);
+    }
+    get_user(i -1, all_users)->is_operator = true;
+    send_youre_oper(fds[i].fd);
+    return (false);
+}
+
+bool    Server::exec_kill(std::string *value, unsigned int i)
+{
+    users *user_to_kill;
+    int update_at;
+    if (value[1].empty() || value[2].empty())
+    {
+        send_need_more_params(value[0], fds[i].fd);
+        return (true);
+    }
+    else if (get_user(i -1, all_users)->is_operator == false)
+    {
+        send_no_privileges(fds[i].fd);
+        return (true);
+    }
+    else if (!(user_to_kill = find_user_by_nickname(value[1], all_users)))
+    {
+        send_no_such_nick(fds[i].fd, value[1]);
+        return (true);
+    }
+    update_at = user_to_kill->user_id;
+    close(fds[user_to_kill->user_id + 1].fd);
+    unavailable_nicknames.push_back(user_to_kill->nickname);
+    all_users = delete_user_from_list(user_to_kill->user_id, all_users);
+    number_of_socket--;
+    update_fds_all_users(update_at + 1);
+    remove_user_from_channels(channels, update_at);
+    nfds--;
+    return (false);
+}
+
+bool    Server::exec_shutdown(std::string *value)
+{
+    delete[] value;
+    return (false);
+}
+
+void    Server::exec_quit(unsigned int i)
+{
+    send_user_quit_answer(fds[i].fd);
+    all_users = delete_user_from_list(i - 1, all_users);
+    close(fds[i].fd);
+    number_of_socket--;
+    update_fds_all_users(i);
+    remove_user_from_channels(channels, i - 1);
+    nfds--;
+}
+
 bool    Server::exec(std::string *all, unsigned int i)
 {
     for (int x = 0; x < (int)all->length(); x++)
     {
         std::string *value = split(all[x], " ");
         if (value[0] == "PASS")
-        {
-            check_password(all_users, fds, value, password, i);
-        }
+            exec_pass(value, i);
         if (value[0] == "NICK")
-        {
-            if (get_user(i - 1, all_users)->connected == false)
-            {
-                delete[] value;
+            if (exec_nick(value, i))
                 continue;
-            }
-            if (is_nickname_available(all_users, value[1]) && !is_banned_nickname(value[1], unavailable_nicknames))
-                all_users = set_user_nickname(all_users, i -1, value[1]);
-            else
-                send_nickname_already_used(fds[i].fd, value[1]);
-        }
         if (value[0] == "USER")
-        {
-            if (get_user(i - 1, all_users)->connected == false)
-            {
-                delete[] value;
+            if (exec_user(value, i))
                 continue;
-            }
-            all_users = set_user_username(all_users, i -1, value[1]);
-            if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
-            {
-                set_user_authentificate(i -1, all_users);
-                send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
-            }
-        }
         if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
-        {
-            if (!find_user_by_nickname(value[1], all_users) && !find_channel(value[1], channels))
-            {
-                send_no_such_nick(fds[i].fd, value[1]);
-                return (true);
-            }
-            if (value->length() == 2)
-            {
-                send_no_text(fds[i].fd);
-                return (true);
-            }
-            if (find_user_by_nickname(value[1], all_users))
-            {
-                send_message_to_user(
-                    fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
-                    value[1],
-                    value[2],
-                    get_user(i - 1, all_users)
-                );
-            } else {
-                channel *chan = find_channel(value[1], channels);
-                for (int it = 0; it < (chan->nb_users); it++)
-                {
-                    if ((unsigned int)it != i -1)
-                    {
-                        send_message_to_user(
-                            fds[chan->users_id[it] + 1].fd,
-                            value[1],
-                            value[2],
-                            get_user(i - 1, all_users)
-                        );
-                    }
-                }
-            }
-            if (value[0] == "PRIVMSG" && find_user_by_nickname(value[1], all_users) && is_user_away(find_user_by_nickname(value[1], all_users)->user_id, all_users))
-            {
-                send_away_message_to_user(
-                    fds[i].fd,
-                    value[1],
-                    get_user(find_user_by_nickname(value[1], all_users)->user_id, all_users)->away_message
-                );
-            }
-        }
+            return (exec_user(value, i));
         if (value[0] == "AWAY")
-        {
-            if (value[1].empty())
-            {
-                set_user_back_from_away(i -1, all_users);
-                send_back_from_away_message(fds[i].fd);
-            }
-            else
-            {
-                set_user_away(i - 1, all_users, value[1]);
-                send_away_message(fds[i].fd);
-            }
-        }
+            exec_away(value, i);
         if (value[0] == "JOIN")
-        {
-            if (value[1].empty())
-            {
-                send_need_more_params(value[0], fds[i].fd);
+            if (exec_join(value, i))
                 return (true);
-            }
-            channel *chan;
-
-            std::cout << "channel to find -> " << value[1] << std::endl;
-            if (channel_exists(value[1], channels) == false)
-            {
-                chan = create_channel(value[1], "Default Topic");
-                chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
-                chan->nb_users++;
-                channels = add_new_channel(channels, chan);
-            }
-            else
-            {
-                chan = find_channel(value[1], channels);
-                if (find_channel_user(chan, get_user(i -1, all_users)->user_id) != -1)
-                {
-                    std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
-                    return (true);
-                }
-                chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
-                chan->nb_users++;
-
-                for (int it = 0; it < (chan->nb_users); it++)
-                {
-                    send_user_joined_channel(
-                        fds[chan->users_id[it] + 1].fd,
-                        get_user(i -1, all_users)->nickname,
-                        get_user(i -1, all_users)->username,
-                        value[1]
-                    );
-                }
-            }
-            send_rpl_topic(chan, fds[i].fd);
-            send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
-        }
         if (value[0] == "PART")
-        {
-            if (value[1].empty())
-            {
-                send_need_more_params(value[0], fds[i].fd);
+            if (exec_part(value, i))
                 return (true);
-            }
-            channel *chan;
-
-            if (channel_exists(value[1], channels))
-            {
-                chan = find_channel(value[1], channels);
-                int u = find_channel_user(chan, get_user(i -1, all_users)->user_id);
-                if (u == -1)
-                {
-                    send_not_on_channel(chan->name, fds[i].fd);
-                    return (true);
-                }
-                else
-                {
-                    for (int i = u; i < chan->nb_users; ++i)
-                        chan->users_id[i] = chan->users_id[i + 1];
-                    chan->nb_users--;
-                }
-            }
-            else
-            {
-                send_no_such_channel(value[1], fds[i].fd);
-                return (true);
-            }
-        }
         if (value[0] == "OPER")                         // Pour l'instant tout le monde peut devenir operator
-        {
-            if (value[1].empty() || value[2].empty())
-            {
-                send_need_more_params(value[0], fds[i].fd);
+            if (exec_oper(value, i))
                 return (true);
-            }
-            else if (get_user(i -1, all_users)->is_operator)
-            {
-                // Déjà operator
-                return (true);
-            }
-            get_user(i -1, all_users)->is_operator = true;
-            send_youre_oper(fds[i].fd);
-        }
         if (value[0] == "KILL" || value[0] == "kill")
-        {
-            users *user_to_kill;
-            int update_at;
-            if (value[1].empty() || value[2].empty())
-            {
-                send_need_more_params(value[0], fds[i].fd);
+            if (exec_kill(value, i))
                 return (true);
-            }
-            else if (get_user(i -1, all_users)->is_operator == false)
-            {
-                send_no_privileges(fds[i].fd);
-                return (true);
-            }
-            else if (!(user_to_kill = find_user_by_nickname(value[1], all_users)))
-            {
-                send_no_such_nick(fds[i].fd, value[1]);
-                return (true);
-            }
-            update_at = user_to_kill->user_id;
-            close(fds[user_to_kill->user_id + 1].fd);
-            unavailable_nicknames.push_back(user_to_kill->nickname);
-            all_users = delete_user_from_list(user_to_kill->user_id, all_users);
-            number_of_socket--;
-            update_fds_all_users(update_at + 1);
-            remove_user_from_channels(channels, update_at);
-			nfds--;
-        }
         if (value[0] == "SHUTDOWN")
-        {
-            delete[] value;
-            return (false);
-        }
+            return (exec_shutdown(value));
         if (value[0] == "QUIT")
-        {
-            send_user_quit_answer(fds[i].fd);
-            all_users = delete_user_from_list(i - 1, all_users);
-            close(fds[i].fd);
-            number_of_socket--;
-            update_fds_all_users(i);
-            remove_user_from_channels(channels, i - 1);
-			nfds--;
-        }
+            exec_quit(i);
         delete[] value;
     }
     return (true);
