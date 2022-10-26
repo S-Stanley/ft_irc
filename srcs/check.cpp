@@ -71,15 +71,3 @@ bool    is_banned_nickname(std::string nickname, std::vector<std::string> unavai
     }
     return (false);
 }
-
-std::vector<std::string>::iterator     pos_in_vector(std::string channel_name, std::vector<std::string> vect)
-{
-    std::vector<std::string>::iterator it = vect.begin();
-    for (unsigned int i = 0; i < vect.size(); i++)
-    {
-        if (vect[i] == channel_name)
-            return (it);
-        it++;
-    }
-    return (it);
-}
