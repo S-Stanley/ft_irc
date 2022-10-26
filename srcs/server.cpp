@@ -284,6 +284,40 @@ bool    Server::exec(std::string *all, unsigned int i)
             remove_user_from_channels(channels, i - 1);
 			nfds--;
         }
+        if (value[0] == "KICK")
+        {
+            std::cout << "received kick command\n";
+            if (!get_user(i -1, all_users)->is_operator)
+            {
+                std::cout << "no privilege for kick\n";
+                send_no_privileges(fds[i].fd);
+            }
+            else if (value->length() < 3 || value[1].empty() || value[2].empty())
+            {
+                std::cout << "missing params for kick \n";
+                send_need_more_params(value[0], fds[i].fd);
+            }
+            else if (!channel_exists(value[1], channels))
+            {
+                std::cout << "channel does not exit for kick\n";
+                send_no_such_channel(value[1], fds[i].fd);
+            }
+            else
+            {
+                std::cout << "enter into else kick\n";
+                /*int u = find_channel_user(chan, find_user_by_nickname(value[1], all_users)->user_id);
+                if (u == -1)
+                {
+                    std::cout << "user not on channel for kick\n";
+                    send_not_on_channel(chan->name, fds[i].fd);
+                }*/
+                //else
+                {
+                    std::cout << "try to kick user\n";
+                    remove_user_from_channels(channels, find_user_by_nickname(value[2], all_users)->user_id);
+                }
+            } 
+        }
         delete[] value;
     }
     return (true);
