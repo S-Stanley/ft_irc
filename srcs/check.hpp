@@ -8,6 +8,7 @@
 #include "response.hpp"
 #include "users.hpp"
 #include <vector>
+#include <iterator>
 
 bool    only_digits(char *str);
 int     check_args(int argc, char **argv);

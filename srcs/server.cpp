@@ -5,6 +5,7 @@ Server::Server(void)
     this->all_users = NULL;
     this->channels = NULL;
     this->number_of_socket = 1;
+	this->nfds = 1;
 }
 
 void    Server::set_config(int port, char *password)
@@ -173,7 +174,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             else
             {
                 chan = find_channel(value[1], channels);
-                if (find_channel_user(chan, get_user(i -1, all_users)) != -1)
+                if (find_channel_user(chan, get_user(i -1, all_users)->user_id) != -1)
                 {
                     std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
                     return (true);
@@ -184,7 +185,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                 for (int it = 0; it < (chan->nb_users); it++)
                 {
                     send_user_joined_channel(
-                        fds[chan->users_id[it]].fd,
+                        fds[chan->users_id[it] + 1].fd,
                         get_user(i -1, all_users)->nickname,
                         get_user(i -1, all_users)->username,
                         value[1]
@@ -206,7 +207,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             if (channel_exists(value[1], channels))
             {
                 chan = find_channel(value[1], channels);
-                int u = find_channel_user(chan, get_user(i -1, all_users));
+                int u = find_channel_user(chan, get_user(i -1, all_users)->user_id);
                 if (u == -1)
                 {
                     send_not_on_channel(chan->name, fds[i].fd);
@@ -264,7 +265,9 @@ bool    Server::exec(std::string *all, unsigned int i)
             unavailable_nicknames.push_back(user_to_kill->nickname);
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
             number_of_socket--;
-            update_fds_all_users(update_at);
+            update_fds_all_users(update_at + 1);
+            remove_user_from_channels(channels, update_at);
+			nfds--;
         }
         if (value[0] == "SHUTDOWN")
         {
@@ -278,6 +281,8 @@ bool    Server::exec(std::string *all, unsigned int i)
             close(fds[i].fd);
             number_of_socket--;
             update_fds_all_users(i);
+            remove_user_from_channels(channels, i - 1);
+			nfds--;
         }
         delete[] value;
     }
@@ -287,7 +292,6 @@ bool    Server::exec(std::string *all, unsigned int i)
 void    Server::run(void)
 {
     int             rc;
-    int             nfds = 1;
     int             new_socket[200];
     int             socket_id;
     bool            server_should_stop = true;

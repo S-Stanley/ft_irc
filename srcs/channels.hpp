@@ -19,6 +19,7 @@ channel*	add_new_channel(channel *channels, channel *new_channel);
 bool		channel_exists(std::string name, channel *channels);
 channel*	find_channel(std::string name, channel *channels);
 void		display_channel_users(channel *channel);
-int       find_channel_user(channel *chan, users *user);
+int       find_channel_user(channel *chan, int user_id);
+int       remove_user_from_channels(channel *channels, int user_id);
 
 #endif

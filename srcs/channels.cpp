@@ -73,14 +73,36 @@ void    display_channel_users(channel *chan)
     }
 }
 
-int find_channel_user(channel *chan, users *user)
+int find_channel_user(channel *chan, int user_id)
 {
     for (int i = 0; i < chan->nb_users; i++)
     {
-        if ((unsigned int)chan->users_id[i] == user->user_id)
+        if (chan->users_id[i] == user_id)
         {
             return (i);
         }
     }
     return (-1);
+}
+
+int remove_user_from_channels(channel *channels, int user_id)
+{
+    channel *tmp = channels;
+    int i = 0;
+
+    while (tmp)
+    {
+        i = find_channel_user(tmp, user_id);
+        if (i != -1)
+        {
+            for (; i < tmp->nb_users; ++i)
+            {
+                tmp->users_id[i] = tmp->users_id[i + 1];
+                tmp->users_id[i]--; // Je décrémente tous les ids qui sont dans mon tableau d'int sinon ils ne s'actualisent pas avec update_fds_all_users()
+            }
+            tmp->nb_users--;
+        }
+        tmp = tmp->next;
+    }
+    return (0);
 }
