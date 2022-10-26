@@ -168,14 +168,13 @@ bool    Server::exec(std::string *all, unsigned int i)
             {
                 chan = create_channel(value[1], "Default Topic");
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
-				get_user(i -1, all_users)->channels.push_back(value[1]);
                 chan->nb_users++;
                 channels = add_new_channel(channels, chan);
             }
             else
             {
                 chan = find_channel(value[1], channels);
-                if (find_channel_user(chan, get_user(i -1, all_users)) != -1)
+                if (find_channel_user(chan, get_user(i -1, all_users)->user_id) != -1)
                 {
                     std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
                     return (true);
@@ -192,7 +191,6 @@ bool    Server::exec(std::string *all, unsigned int i)
                         value[1]
                     );
                 }
-				get_user(i -1, all_users)->channels.push_back(value[1]);
             }
             send_rpl_topic(chan, fds[i].fd);
             send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
@@ -209,7 +207,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             if (channel_exists(value[1], channels))
             {
                 chan = find_channel(value[1], channels);
-                int u = find_channel_user(chan, get_user(i -1, all_users));
+                int u = find_channel_user(chan, get_user(i -1, all_users)->user_id);
                 if (u == -1)
                 {
                     send_not_on_channel(chan->name, fds[i].fd);
@@ -220,7 +218,6 @@ bool    Server::exec(std::string *all, unsigned int i)
                     for (int i = u; i < chan->nb_users; ++i)
                         chan->users_id[i] = chan->users_id[i + 1];
                     chan->nb_users--;
-					get_user(i -1, all_users)->channels.erase(pos_in_vector(value[1], get_user(i -1, all_users)->channels));
                 }
             }
             else
@@ -268,7 +265,8 @@ bool    Server::exec(std::string *all, unsigned int i)
             unavailable_nicknames.push_back(user_to_kill->nickname);
             all_users = delete_user_from_list(user_to_kill->user_id, all_users);
             number_of_socket--;
-            update_fds_all_users(update_at);
+            update_fds_all_users(update_at + 1);
+            remove_user_from_channels(channels, update_at);
 			nfds--;
         }
         if (value[0] == "SHUTDOWN")
@@ -283,6 +281,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             close(fds[i].fd);
             number_of_socket--;
             update_fds_all_users(i);
+            remove_user_from_channels(channels, i - 1);
 			nfds--;
         }
         delete[] value;

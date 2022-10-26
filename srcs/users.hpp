@@ -13,7 +13,6 @@ struct users {
     bool            is_operator;
     bool            away;
     std::string     away_message;
-    std::vector<std::string> channels;
     struct users    *next;
 };
 
