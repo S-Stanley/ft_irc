@@ -168,6 +168,7 @@ bool    Server::exec(std::string *all, unsigned int i)
             {
                 chan = create_channel(value[1], "Default Topic");
                 chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+				get_user(i -1, all_users)->channels.push_back(value[1]);
                 chan->nb_users++;
                 channels = add_new_channel(channels, chan);
             }
@@ -191,6 +192,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                         value[1]
                     );
                 }
+				get_user(i -1, all_users)->channels.push_back(value[1]);
             }
             send_rpl_topic(chan, fds[i].fd);
             send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
@@ -218,6 +220,7 @@ bool    Server::exec(std::string *all, unsigned int i)
                     for (int i = u; i < chan->nb_users; ++i)
                         chan->users_id[i] = chan->users_id[i + 1];
                     chan->nb_users--;
+					get_user(i -1, all_users)->channels.erase(pos_in_vector(value[1], get_user(i -1, all_users)->channels));
                 }
             }
             else
