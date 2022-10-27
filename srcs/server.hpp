@@ -30,14 +30,14 @@ class Server {
         void    update_fds_all_users(int user_id);
 
         void    exec_pass(std::string *value, unsigned int i);
-        bool    exec_nick(std::string *value, unsigned int i);
-        bool    exec_user(std::string *value, unsigned int i);
-        bool    exec_msg(std::string *value, unsigned int i);
+        bool    exec_nick(std::string *value, unsigned int i, users *user);
+        bool    exec_user(std::string *value, unsigned int i, users *user);
+        bool    exec_msg(std::string *value, unsigned int i, users *user);
         void    exec_away(std::string *value, unsigned int i);
-        bool    exec_join(std::string *value, unsigned int i);
-        bool    exec_part(std::string *value, unsigned int i);
-        bool    exec_oper(std::string *value, unsigned int i);
-        bool    exec_kill(std::string *value, unsigned int i);
+        bool    exec_join(std::string *value, unsigned int i, users *user);
+        bool    exec_part(std::string *value, unsigned int i, users *user);
+        bool    exec_oper(std::string *value, unsigned int i, users *user);
+        bool    exec_kill(std::string *value, unsigned int i, users *user);
         bool    exec_shutdown(std::string *value);
         void    exec_quit(unsigned int i);
     private:
