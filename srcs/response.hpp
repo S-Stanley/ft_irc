@@ -8,6 +8,8 @@
 #include <string.h>
 #include "channels.hpp"
 
+struct channel;
+
 void	send_connection_ok(int socket, std::string nickname);
 void	send_nickname_already_used(int socket, std::string nickname);
 void	send_err_password(int socket);
@@ -27,6 +29,7 @@ void    send_away_message(int socket);
 void    send_back_from_away_message(int socket);
 void    send_already_registred(int socket);
 void    send_user_joined_channel(int socket, std::string nickname, std::string username, std::string channel_name);
+void    send_user_part_channel(int socket, std::string nickname, std::string username, std::string channel_name, std::string part_msg);
 void    send_user_quit_answer(int socket);
 void    send_no_privileges(int socket);
 void    send_youre_oper(int socket);

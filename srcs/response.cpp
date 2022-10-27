@@ -106,6 +106,12 @@ void    send_user_joined_channel(int socket, std::string nickname, std::string u
     send(socket, message.c_str(), message.length(), 0);
 }
 
+void    send_user_part_channel(int socket, std::string nickname, std::string username, std::string channel_name, std::string part_msg)
+{
+    std::string message = ":" + nickname + "!" + username + "@127.0.0.1 PART " + channel_name + " Reason: " + part_msg + "\r\n";
+    send(socket, message.c_str(), message.length(), 0);
+}
+
 void    send_no_such_channel(std::string channel_name, int socket)
 {
     std::string message = ":127.0.0.1 403 ERR_NOSUCHCHANNEL " + channel_name + " :No such channel\r\n";

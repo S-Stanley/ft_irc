@@ -226,6 +226,25 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
                 chan->users_id[i] = chan->users_id[i + 1];
             chan->nb_users--;
         }
+        for (int it = 0; it < (chan->nb_users); it++)
+        {
+            if (value[2].empty() == false)
+                send_user_part_channel(
+                    fds[chan->users_id[it] + 1].fd,
+                    user->nickname,
+                    user->username,
+                    value[1],
+                    value[2]
+                );
+            else
+                send_user_part_channel(
+                    fds[chan->users_id[it] + 1].fd,
+                    user->nickname,
+                    user->username,
+                    value[1],
+                    ""
+                );
+        }
     }
     send_no_such_channel(value[1], fds[i].fd);
     return (true);
@@ -268,12 +287,14 @@ bool    Server::exec_kill(std::string *value, unsigned int i, users *user)
         return (true);
     }
     update_at = user_to_kill->user_id;
+    std::string nick = user_to_kill->nickname;
+    std::string username = user_to_kill->username;
     close(fds[user_to_kill->user_id + 1].fd);
     unavailable_nicknames.push_back(user_to_kill->nickname);
     all_users = delete_user_from_list(user_to_kill->user_id, all_users);
     number_of_socket--;
     update_fds_all_users(update_at + 1);
-    remove_user_from_channels(channels, update_at);
+    remove_user_from_channels(channels, update_at, fds, nick, username, "KILL");
     return (false);
 }
 
@@ -283,14 +304,41 @@ bool    Server::exec_shutdown(std::string *value)
     return (false);
 }
 
-void    Server::exec_quit(unsigned int i)
+void    Server::exec_quit(unsigned int i, users *user)
 {
+    std::string nick = user->nickname;
+    std::string username = user->username;
+
     send_user_quit_answer(fds[i].fd);
     all_users = delete_user_from_list(i - 1, all_users);
     close(fds[i].fd);
     number_of_socket--;
     update_fds_all_users(i);
-    remove_user_from_channels(channels, i - 1);
+    remove_user_from_channels(channels, i - 1, fds, nick, username, "QUIT");
+}
+
+void    Server::exec_kick(std::string *value, unsigned int i)
+{
+    std::cout << "received kick command\n";
+    if (!get_user(i -1, all_users)->is_operator)
+    {
+        std::cout << "no privilege for kick\n";
+        send_no_privileges(fds[i].fd);
+    }
+    else if (value->length() < 3 || value[1].empty() || value[2].empty())
+    {
+        std::cout << "missing params for kick \n";
+        send_need_more_params(value[0], fds[i].fd);
+    }
+    else if (!channel_exists(value[1], channels))
+    {
+        std::cout << "channel does not exit for kick\n";
+        send_no_such_channel(value[1], fds[i].fd);
+    }
+    else
+    {
+        exec_part(value, find_user_by_nickname(value[2], all_users)->user_id + 1, find_user_by_nickname(value[2], all_users));
+    } 
 }
 
 bool    Server::exec(std::string *all, unsigned int i)
@@ -324,10 +372,12 @@ bool    Server::exec(std::string *all, unsigned int i)
         if (value[0] == "KILL" || value[0] == "kill")
             if (exec_kill(value, i, user))
                 return (true);
+        if (value[0] == "KICK")
+            (exec_kick(value, i));
         if (value[0] == "SHUTDOWN")
             return (exec_shutdown(value));
         if (value[0] == "QUIT")
-            exec_quit(i);
+            exec_quit(i, user);
         delete[] value;
     }
     return (true);
