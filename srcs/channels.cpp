@@ -1,5 +1,4 @@
 #include "channels.hpp"
-#define DBG(vari) std::cerr<<#vari<<" = "<<(vari)<<std::endl;
 
 bool	channel_exists(std::string name, channel *channels)
 {
@@ -85,7 +84,7 @@ int find_channel_user(channel *chan, int user_id)
     return (-1);
 }
 
-int remove_user_from_channels(channel *channels, int user_id)
+int remove_user_from_channels(channel *channels, int user_id, pollfd *fds, std::string nickname, std::string username, std::string part_msg)
 {
     channel *tmp = channels;
     int i = 0;
@@ -95,6 +94,10 @@ int remove_user_from_channels(channel *channels, int user_id)
         i = find_channel_user(tmp, user_id);
         if (i != -1)
         {
+            for (int it = 0; it < (tmp->nb_users); it++)
+            {
+                send_user_part_channel(fds[tmp->users_id[it] + 1].fd, nickname, username, tmp->name, part_msg);
+            }
             for (; i < tmp->nb_users; ++i)
             {
                 tmp->users_id[i] = tmp->users_id[i + 1];
