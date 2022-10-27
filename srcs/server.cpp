@@ -67,9 +67,9 @@ void    Server::exec_pass(std::string *value, unsigned int i)
     check_password(all_users, fds, value, password, i);
 }
 
-bool    Server::exec_nick(std::string *value, unsigned int i)
+bool    Server::exec_nick(std::string *value, unsigned int i, users *user)
 {
-    if (get_user(i - 1, all_users)->connected == false)
+    if (user->connected == false)
     {
         delete[] value;
         return (true);
@@ -81,23 +81,23 @@ bool    Server::exec_nick(std::string *value, unsigned int i)
     return (false);
 }
 
-bool    Server::exec_user(std::string *value, unsigned int i)
+bool    Server::exec_user(std::string *value, unsigned int i, users *user)
 {
-    if (get_user(i - 1, all_users)->connected == false)
+    if (user->connected == false)
     {
         delete[] value;
         return (true);
     }
     all_users = set_user_username(all_users, i -1, value[1]);
-    if (strcmp(get_user(i -1, all_users)->nickname.c_str(), "") != 0)
+    if (strcmp(user->nickname.c_str(), "") != 0)
     {
         set_user_authentificate(i -1, all_users);
-        send_connection_ok(fds[i].fd, get_user(i -1, all_users)->nickname);
+        send_connection_ok(fds[i].fd, user->nickname);
     }
     return (false);
 }
 
-bool    Server::exec_msg(std::string *value, unsigned int i)
+bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
 {
     if (!find_user_by_nickname(value[1], all_users) && !find_channel(value[1], channels))
     {
@@ -115,7 +115,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i)
             fds[find_user_by_nickname(value[1], all_users)->user_id + 1].fd,
             value[1],
             value[2],
-            get_user(i - 1, all_users)
+            user
         );
     } else {
         channel *chan = find_channel(value[1], channels);
@@ -127,7 +127,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i)
                     fds[chan->users_id[it] + 1].fd,
                     value[1],
                     value[2],
-                    get_user(i - 1, all_users)
+                    user
                 );
             }
         }
@@ -157,7 +157,7 @@ void    Server::exec_away(std::string *value, unsigned int i)
     }
 }
 
-bool    Server::exec_join(std::string *value, unsigned int i)
+bool    Server::exec_join(std::string *value, unsigned int i, users *user)
 {
     if (value[1].empty())
     {
@@ -170,37 +170,37 @@ bool    Server::exec_join(std::string *value, unsigned int i)
     if (channel_exists(value[1], channels) == false)
     {
         chan = create_channel(value[1], "Default Topic");
-        chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+        chan->users_id[chan->nb_users] = user->user_id;
         chan->nb_users++;
         channels = add_new_channel(channels, chan);
     }
     else
     {
         chan = find_channel(value[1], channels);
-        if (find_channel_user(chan, get_user(i -1, all_users)->user_id) != -1)
+        if (find_channel_user(chan, user->user_id) != -1)
         {
             std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
             return (true);
         }
-        chan->users_id[chan->nb_users] = get_user(i -1, all_users)->user_id;
+        chan->users_id[chan->nb_users] = user->user_id;
         chan->nb_users++;
 
         for (int it = 0; it < (chan->nb_users); it++)
         {
             send_user_joined_channel(
                 fds[chan->users_id[it] + 1].fd,
-                get_user(i -1, all_users)->nickname,
-                get_user(i -1, all_users)->username,
+                user->nickname,
+                user->username,
                 value[1]
             );
         }
     }
     send_rpl_topic(chan, fds[i].fd);
-    send_rpl_namreply(chan, get_user(i -1, all_users)->nickname, fds[i].fd, all_users);
+    send_rpl_namreply(chan, user->nickname, fds[i].fd, all_users);
     return (false);
 }
 
-bool    Server::exec_part(std::string *value, unsigned int i)
+bool    Server::exec_part(std::string *value, unsigned int i, users *user)
 {
     if (value[1].empty())
     {
@@ -212,7 +212,7 @@ bool    Server::exec_part(std::string *value, unsigned int i)
     if (channel_exists(value[1], channels))
     {
         chan = find_channel(value[1], channels);
-        int u = find_channel_user(chan, get_user(i -1, all_users)->user_id);
+        int u = find_channel_user(chan, user->user_id);
         if (u == -1)
         {
             send_not_on_channel(chan->name, fds[i].fd);
@@ -229,24 +229,24 @@ bool    Server::exec_part(std::string *value, unsigned int i)
     return (true);
 }
 
-bool    Server::exec_oper(std::string *value, unsigned int i)
+bool    Server::exec_oper(std::string *value, unsigned int i, users *user)
 {
     if (value[1].empty() || value[2].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
         return (true);
     }
-    else if (get_user(i -1, all_users)->is_operator)
+    else if (user->is_operator)
     {
         // Déjà operator
         return (true);
     }
-    get_user(i -1, all_users)->is_operator = true;
+    user->is_operator = true;
     send_youre_oper(fds[i].fd);
     return (false);
 }
 
-bool    Server::exec_kill(std::string *value, unsigned int i)
+bool    Server::exec_kill(std::string *value, unsigned int i, users *user)
 {
     users *user_to_kill;
     int update_at;
@@ -255,7 +255,7 @@ bool    Server::exec_kill(std::string *value, unsigned int i)
         send_need_more_params(value[0], fds[i].fd);
         return (true);
     }
-    else if (get_user(i -1, all_users)->is_operator == false)
+    else if (user->is_operator == false)
     {
         send_no_privileges(fds[i].fd);
         return (true);
@@ -295,32 +295,33 @@ void    Server::exec_quit(unsigned int i)
 
 bool    Server::exec(std::string *all, unsigned int i)
 {
+    users *user = get_user(i -1, all_users);
     for (int x = 0; x < (int)all->length(); x++)
     {
         std::string *value = split(all[x], " ");
         if (value[0] == "PASS")
             exec_pass(value, i);
         if (value[0] == "NICK")
-            if (exec_nick(value, i))
+            if (exec_nick(value, i, user))
                 continue;
         if (value[0] == "USER")
-            if (exec_user(value, i))
+            if (exec_user(value, i, user))
                 continue;
         if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
-            return (exec_user(value, i));
+            return (exec_user(value, i, user));
         if (value[0] == "AWAY")
             exec_away(value, i);
         if (value[0] == "JOIN")
-            if (exec_join(value, i))
+            if (exec_join(value, i, user))
                 return (true);
         if (value[0] == "PART")
-            if (exec_part(value, i))
+            if (exec_part(value, i, user))
                 return (true);
         if (value[0] == "OPER")                         // Pour l'instant tout le monde peut devenir operator
-            if (exec_oper(value, i))
+            if (exec_oper(value, i, user))
                 return (true);
         if (value[0] == "KILL" || value[0] == "kill")
-            if (exec_kill(value, i))
+            if (exec_kill(value, i, user))
                 return (true);
         if (value[0] == "SHUTDOWN")
             return (exec_shutdown(value));
