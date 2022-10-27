@@ -55,9 +55,13 @@ void	send_err_cannot_send_to_chan(int socket, std::string channel_name)
 	send(socket, message.c_str(), message.length(), 0);
 }
 
-void	send_message_to_user(int socket, std::string nickname, std::string message_to_send, users *sender)
+void	send_message_to_user(int socket, std::string nickname, std::string message_to_send, users *sender, bool priv)
 {
-	std::string message = ":" + sender->nickname + "!" + sender->username + "@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
+    std::string message;
+    if (priv)
+	    message = ":127.0.0.1 " + sender->nickname + "!" + sender->username + "@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
+    else
+	    message = ":" + sender->nickname + "!" + sender->username + "@127.0.0.1 PRIVMSG " + nickname + " " + message_to_send + "\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
