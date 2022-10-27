@@ -5,7 +5,6 @@ Server::Server(void)
     this->all_users = NULL;
     this->channels = NULL;
     this->number_of_socket = 1;
-	this->nfds = 1;
 }
 
 void    Server::set_config(int port, char *password)
@@ -272,7 +271,6 @@ bool    Server::exec_kill(std::string *value, unsigned int i, users *user)
     number_of_socket--;
     update_fds_all_users(update_at + 1);
     remove_user_from_channels(channels, update_at);
-    nfds--;
     return (false);
 }
 
@@ -290,7 +288,6 @@ void    Server::exec_quit(unsigned int i)
     number_of_socket--;
     update_fds_all_users(i);
     remove_user_from_channels(channels, i - 1);
-    nfds--;
 }
 
 bool    Server::exec(std::string *all, unsigned int i)
@@ -362,18 +359,17 @@ void    Server::run(void)
                     perror("accept");
                     exit(EXIT_FAILURE);
                 }
-                number_of_socket++;
                 all_users = add_user(all_users, new_user(socket_id, "", ""));
-                fds[nfds].fd = new_socket[socket_id];
-                fds[nfds].events = POLLIN;
-                send(fds[nfds].fd, "Chatting in : <#Inserer le bon channel>\n", strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
-                nfds++;
+                fds[number_of_socket].fd = new_socket[socket_id];
+                fds[number_of_socket].events = POLLIN;
+                send(fds[number_of_socket].fd, "Chatting in : <#Inserer le bon channel>\n", strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
+                number_of_socket++;
                 socket_id++;
             }
             else
             {
                 i = 0;
-                while (i < (unsigned int)nfds)
+                while (i < (unsigned int)number_of_socket)
                 {
                     throw_err_password = true;
                     i++;
