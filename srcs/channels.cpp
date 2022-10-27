@@ -98,7 +98,8 @@ int remove_user_from_channels(channel *channels, int user_id)
             for (; i < tmp->nb_users; ++i)
             {
                 tmp->users_id[i] = tmp->users_id[i + 1];
-                tmp->users_id[i]--; // Je décrémente tous les ids qui sont dans mon tableau d'int sinon ils ne s'actualisent pas avec update_fds_all_users()
+                if (tmp->users_id[i] != 0)
+                    tmp->users_id[i]--; // Je décrémente tous les ids qui sont dans mon tableau d'int sinon ils ne s'actualisent pas avec update_fds_all_users()
             }
             tmp->nb_users--;
         }
