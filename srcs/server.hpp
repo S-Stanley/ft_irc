@@ -51,6 +51,7 @@ class Server {
         channel             *channels;
         int                 number_of_socket;
         int                 nfds;
+        int                 new_socket[200];
 };
 
 #endif
