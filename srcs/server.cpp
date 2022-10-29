@@ -355,8 +355,8 @@ bool    Server::exec(std::string *all, unsigned int i)
             if (exec_user(value, i, user))
                 continue;
         if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
-            exec_msg(value, i, user);
-                // continue;
+            if (exec_msg(value, i, user))
+                continue;
         if (value[0] == "AWAY")
             exec_away(value, i);
         if (value[0] == "JOIN")
