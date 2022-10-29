@@ -211,42 +211,41 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     }
     channel *chan;
 
-    if (channel_exists(value[1], channels))
+    if (!channel_exists(value[1], channels))
     {
-        chan = find_channel(value[1], channels);
-        int u = find_channel_user(chan, user->user_id);
-        if (u == -1)
-        {
-            send_not_on_channel(chan->name, fds[i].fd);
-            return (true);
-        }
-        else
-        {
-            for (int i = u; i < chan->nb_users; ++i)
-                chan->users_id[i] = chan->users_id[i + 1];
-            chan->nb_users--;
-        }
-        for (int it = 0; it < (chan->nb_users); it++)
-        {
-            if (value[2].empty() == false)
-                send_user_part_channel(
-                    fds[chan->users_id[it] + 1].fd,
-                    user->nickname,
-                    user->username,
-                    value[1],
-                    value[2]
-                );
-            else
-                send_user_part_channel(
-                    fds[chan->users_id[it] + 1].fd,
-                    user->nickname,
-                    user->username,
-                    value[1],
-                    ""
-                );
-        }
+        send_no_such_channel(value[1], fds[i].fd);
+        return (true);
     }
-    send_no_such_channel(value[1], fds[i].fd);
+    chan = find_channel(value[1], channels);
+    int u = find_channel_user(chan, user->user_id);
+    if (u == -1)
+    {
+        send_not_on_channel(chan->name, fds[i].fd);
+        return (true);
+    }
+    for (int it = 0; it < (chan->nb_users); it++)
+    {
+        if (value[2].empty() == false)
+            send_user_part_channel(
+                fds[chan->users_id[it] + 1].fd,
+                user->nickname,
+                user->username,
+                value[1],
+                value[2]
+            );
+        else
+            send_user_part_channel(
+                fds[chan->users_id[it] + 1].fd,
+                user->nickname,
+                user->username,
+                value[1],
+                ""
+            );
+    }
+    for (int i = u; i < chan->nb_users; ++i)
+        chan->users_id[i] = chan->users_id[i + 1];
+    chan->nb_users--;
+    send_not_on_channel(chan->name, fds[i].fd);
     return (true);
 }
 
