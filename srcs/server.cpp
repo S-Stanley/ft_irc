@@ -121,7 +121,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
         channel *chan = find_channel(value[1], channels);
         for (int it = 0; it < (chan->nb_users); it++)
         {
-            if ((unsigned int)it != i -1)
+            if (user->nickname != get_user(chan->users_id[it], all_users)->nickname)
             {
                 std::cout << "sending message to: " << get_user(chan->users_id[it], all_users)->nickname << std::endl;
                 send_message_to_user(
