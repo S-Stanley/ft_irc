@@ -2,7 +2,7 @@
 
 void	send_connection_ok(int socket, std::string nickname)
 {
-	std::string message = ":127.0.0.1 001 RPL_WELCOME " + nickname + " :Welcome to the Internet Relay Network\r\n";
+	std::string message = ":127.0.0.1 001 " + nickname + " :Welcome to the Internet Relay Network\r\n";
 	send(socket, message.c_str(), message.length(), 0);
 }
 
@@ -88,6 +88,10 @@ void    send_rpl_namreply(channel *chan, std::string nickname, int socket, users
 
     std::string end_of_name_message = ":127.0.0.1 366 RPL_ENDOFNAMES " + nickname + " " + chan->name + " :End of NAMES list\r\n";
     send(socket, end_of_name_message.c_str(), end_of_name_message.length(), 0);
+
+    std::cout << "******\n";
+    std::cout << message << std::endl;
+    std::cout << end_of_name_message << std::endl;
 }
 
 void    send_rpl_topic(channel *chan, int socket)
