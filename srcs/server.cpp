@@ -125,7 +125,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
             {
                 std::cout << "sending message to: " << get_user(chan->users_id[it], all_users)->nickname << std::endl;
                 send_message_to_user(
-                    new_socket[get_user(chan->users_id[it], all_users)->user_id],
+                    fds[chan->users_id[it] + 1].fd,
                     value[1],
                     value[2],
                     user,
@@ -245,7 +245,6 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     for (int i = u; i < chan->nb_users; ++i)
         chan->users_id[i] = chan->users_id[i + 1];
     chan->nb_users--;
-    send_not_on_channel(chan->name, fds[i].fd);
     return (true);
 }
 
@@ -307,13 +306,14 @@ void    Server::exec_quit(unsigned int i, users *user)
 {
     std::string nick = user->nickname;
     std::string username = user->username;
+    int         user_id = get_user(i - 1, all_users)->user_id;
 
     send_user_quit_answer(fds[i].fd);
     all_users = delete_user_from_list(i - 1, all_users);
     close(fds[i].fd);
     number_of_socket--;
     update_fds_all_users(i);
-    remove_user_from_channels(channels, i - 1, fds, nick, username, "QUIT");
+    remove_user_from_channels(channels, user_id, fds, nick, username, "QUIT");
 }
 
 void    Server::exec_kick(std::string *value, unsigned int i)
@@ -355,8 +355,8 @@ bool    Server::exec(std::string *all, unsigned int i)
             if (exec_user(value, i, user))
                 continue;
         if (value[0] == "PRIVMSG" || value[0] == "NOTICE")
-            if (exec_msg(value, i, user))
-                continue;
+            exec_msg(value, i, user);
+                // continue;
         if (value[0] == "AWAY")
             exec_away(value, i);
         if (value[0] == "JOIN")
