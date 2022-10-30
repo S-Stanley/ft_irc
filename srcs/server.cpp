@@ -99,9 +99,17 @@ bool    Server::exec_user(std::string *value, unsigned int i, users *user)
 
 bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
 {
-    if (!find_user_by_nickname(value[1], all_users) && !find_channel(value[1], channels))
+    channel *chan_to_find = find_channel(value[1], channels);
+    users   *user_to_find = find_user_by_nickname(value[1], all_users);
+
+    if (!user_to_find && !chan_to_find)
     {
         send_no_such_nick(fds[i].fd, value[1]);
+        return (true);
+    }
+    if (chan_to_find && find_channel_user(chan_to_find, i - 1) == -1)
+    {
+        send_not_on_channel(value[1], fds[i].fd);
         return (true);
     }
     if (value->length() == 2)
@@ -109,10 +117,10 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
         send_no_text(fds[i].fd);
         return (true);
     }
-    if (find_user_by_nickname(value[1], all_users))
+    if (user_to_find)
     {
         send_message_to_user(
-            new_socket[find_user_by_nickname(value[1], all_users)->user_id],
+            new_socket[user_to_find->user_id],
             value[1],
             value[2],
             user,
