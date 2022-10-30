@@ -420,11 +420,10 @@ void    Server::run(void)
             }
             else
             {
-                i = 0;
+                i = 1;
                 while (i < (unsigned int)number_of_socket)
                 {
                     throw_err_password = true;
-                    i++;
                     if (fds[i].revents == 1)
                     {
                         std::string *all = get_commands(fds, i);
@@ -446,6 +445,7 @@ void    Server::run(void)
                         }
                         delete[] all;
                     }
+                    i++;
                 }
             }
         }
