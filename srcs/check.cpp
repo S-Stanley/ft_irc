@@ -35,30 +35,35 @@ int check_args(int argc, char **argv)
     return (0);
 }
 
-void    check_password(users *all_users, pollfd *fds, std::string *value, char *password, unsigned int i)
+bool    check_password(users *all_users, pollfd *fds, std::string *value, char *password, unsigned int i)
 {
     users   *usr = get_user(i - 1, all_users);
 
     if (usr && usr->connected)
     {
         send_already_registred(fds[i].fd);
+        return (false);
     }
     else if (value[1].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
+        return (false);
     }
     else if (!value[2].empty())
     {
         send(fds[i].fd, "Error: invalid password (no spaces)\n", ft_strlen("Error: invalid password (no spaces)\n"), 0);
+        return (false);
     }
     else if (value[1] != password)
     {
         send_err_password(fds[i].fd);
+        return (false);
     }
     else
     {
         get_user(i - 1, all_users)->connected = true;
         send(fds[i].fd, "Password OK\n", ft_strlen("Password OK\n"), 0);
+        return (true);
     }
 }
 

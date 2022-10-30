@@ -62,9 +62,16 @@ void    Server::update_fds_all_users(int user_id)
     }
 }
 
-void    Server::exec_pass(std::string *value, unsigned int i)
+bool    Server::exec_pass(std::string *value, unsigned int i)
 {
-    check_password(all_users, fds, value, password, i);
+    if (!check_password(all_users, fds, value, password, i))
+    {
+        delete[] value;
+        all_users = delete_user_from_list(i - 1, all_users);
+        number_of_socket--;
+        return (false);
+    }
+    return (true);
 }
 
 bool    Server::exec_nick(std::string *value, unsigned int i, users *user)
@@ -105,16 +112,19 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
     if (!user_to_find && !chan_to_find)
     {
         send_no_such_nick(fds[i].fd, value[1]);
+        delete[] value;
         return (true);
     }
     if (chan_to_find && find_channel_user(chan_to_find, i - 1) == -1)
     {
         send_not_on_channel(value[1], fds[i].fd);
+        delete[] value;
         return (true);
     }
     if (value->length() == 2)
     {
         send_no_text(fds[i].fd);
+        delete[] value;
         return (true);
     }
     if (user_to_find)
@@ -173,6 +183,7 @@ bool    Server::exec_join(std::string *value, unsigned int i, users *user)
     if (value[1].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
+        delete[] value;
         return (true);
     }
     channel *chan;
@@ -190,7 +201,8 @@ bool    Server::exec_join(std::string *value, unsigned int i, users *user)
         chan = find_channel(value[1], channels);
         if (find_channel_user(chan, user->user_id) != -1)
         {
-            std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
+            std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?'
+            delete[] value;
             return (true);
         }
         chan->users_id[chan->nb_users] = user->user_id;
@@ -216,6 +228,7 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     if (value[1].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
+        delete[] value;
         return (true);
     }
     channel *chan;
@@ -223,6 +236,7 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     if (!channel_exists(value[1], channels))
     {
         send_no_such_channel(value[1], fds[i].fd);
+        delete[] value;
         return (true);
     }
     chan = find_channel(value[1], channels);
@@ -230,6 +244,7 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     if (u == -1)
     {
         send_not_on_channel(chan->name, fds[i].fd);
+        delete[] value;
         return (true);
     }
     for (int it = 0; it < (chan->nb_users); it++)
@@ -258,6 +273,7 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
     for (int i = u; i < chan->nb_users; ++i)
         chan->users_id[i] = chan->users_id[i + 1];
     chan->nb_users--;
+    delete[] value;
     return (true);
 }
 
@@ -266,11 +282,13 @@ bool    Server::exec_oper(std::string *value, unsigned int i, users *user)
     if (value[1].empty() || value[2].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
+        delete[] value;
         return (true);
     }
     else if (user->is_operator)
     {
         // Déjà operator
+        delete[] value;
         return (true);
     }
     user->is_operator = true;
@@ -285,16 +303,19 @@ bool    Server::exec_kill(std::string *value, unsigned int i, users *user)
     if (value[1].empty() || value[2].empty())
     {
         send_need_more_params(value[0], fds[i].fd);
+        delete[] value;
         return (true);
     }
     else if (user->is_operator == false)
     {
         send_no_privileges(fds[i].fd);
+        delete[] value;
         return (true);
     }
     else if (!(user_to_kill = find_user_by_nickname(value[1], all_users)))
     {
         send_no_such_nick(fds[i].fd, value[1]);
+        delete[] value;
         return (true);
     }
     update_at = user_to_kill->user_id;
@@ -311,11 +332,13 @@ bool    Server::exec_kill(std::string *value, unsigned int i, users *user)
 
 bool    Server::exec_shutdown(std::string *value)
 {
+    delete_all_channels(channels);
+    free_all_users(all_users);
     delete[] value;
     return (false);
 }
 
-void    Server::exec_quit(unsigned int i, users *user)
+void	Server::exec_quit(unsigned int i, users *user)
 {
     std::string nick = user->nickname;
     std::string username = user->username;
@@ -359,8 +382,10 @@ bool    Server::exec(std::string *all, unsigned int i)
     for (int x = 0; x < (int)all->length(); x++)
     {
         std::string *value = split(all[x], " ");
+
         if (value[0] == "PASS")
-            exec_pass(value, i);
+            if (!exec_pass(value, i))
+                return (true);
         if (value[0] == "NICK")
             if (exec_nick(value, i, user))
                 continue;
@@ -389,7 +414,11 @@ bool    Server::exec(std::string *all, unsigned int i)
         if (value[0] == "SHUTDOWN")
             return (exec_shutdown(value));
         if (value[0] == "QUIT")
+        {
             exec_quit(i, user);
+            if (!all_users)
+                return (exec_shutdown(value));
+        }
         delete[] value;
     }
     return (true);
