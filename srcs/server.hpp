@@ -1,8 +1,6 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#define EXIT_FAILURE 1
-
 #include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +23,7 @@ class Server {
 
         void    set_config(int port, char *password);
         void    run(void);
-        void    setup(void);
+        bool    setup(void);
         bool    exec(std::string *all, unsigned int i);
         void    update_fds_all_users(int user_id);
 
@@ -51,7 +49,6 @@ class Server {
         std::vector<std::string> unavailable_nicknames;
         channel             *channels;
         int                 number_of_socket;
-        int                 nfds;
         int                 new_socket[200];
 };
 

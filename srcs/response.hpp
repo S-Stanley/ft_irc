@@ -7,6 +7,7 @@
 #include <sys/poll.h>
 #include <string.h>
 #include "channels.hpp"
+#include "utils.hpp"
 
 struct channel;
 
