@@ -27,7 +27,7 @@ class Server {
         bool    exec(std::string *all, unsigned int i);
         void    update_fds_all_users(int user_id);
 
-        void    exec_pass(std::string *value, unsigned int i);
+        bool    exec_pass(std::string *value, unsigned int i);
         bool    exec_nick(std::string *value, unsigned int i, users *user);
         bool    exec_user(std::string *value, unsigned int i, users *user);
         bool    exec_msg(std::string *value, unsigned int i, users *user);

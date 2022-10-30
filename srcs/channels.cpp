@@ -118,3 +118,18 @@ int remove_user_from_channels(channel *channels, int user_id, pollfd *fds, std::
     }
     return (0);
 }
+
+channel    *delete_all_channels(channel *lst)
+{
+    channel    *tmp = lst;
+
+    if (!lst)
+        return (NULL);
+    while (lst)
+    {
+        tmp = lst->next;
+        delete lst;
+        lst = tmp;
+    }
+    return (NULL);
+}

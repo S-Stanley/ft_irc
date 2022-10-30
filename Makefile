@@ -3,7 +3,7 @@ ODIR = .obj
 OBJS = $(addprefix $(ODIR)/, $(SRCS:.cpp=.o))
 DEP = $(OBJS:.o=.d)
 CC = c++
-FLAGS = -Wall -Wextra -std=c++98 -g3 -fsanitize=address
+FLAGS = -Wall -Wextra -std=c++98 -g3
 CFLAGS = $(FLAGS) -MMD
 RM = rm -rf
 NAME = ircserv
