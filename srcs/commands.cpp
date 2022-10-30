@@ -7,7 +7,7 @@ std::string *get_commands(struct pollfd *fds, int i)
     int         x = 0;
     char buffer[1024] = {0};
 
-    valread = read(fds[i].fd, (char *)buffer, 1024);
+    valread = recv(fds[i].fd, (char *)buffer, 1024, 0);
     if (valread != -1)
         buffer[valread] = 0;
     std::cout << buffer << std::endl;

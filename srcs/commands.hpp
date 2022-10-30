@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/poll.h>
+#include <sys/socket.h>
 
 #include "utils.hpp"
 

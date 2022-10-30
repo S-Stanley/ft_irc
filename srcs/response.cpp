@@ -26,7 +26,7 @@ void    send_broadcast(unsigned int nb_fd, struct pollfd *fds, std::string messa
     while (i < nb_fd)
     {
         std::cout << "sending to: " << i << std::endl;
-        send(fds[i].fd, message.c_str(), strlen(message.c_str()), 0);
+        send(fds[i].fd, message.c_str(), ft_strlen(message.c_str()), 0);
         i++;
     }
 }

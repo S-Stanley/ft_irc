@@ -7,6 +7,7 @@
 
 #include "response.hpp"
 #include "users.hpp"
+#include "utils.hpp"
 #include <vector>
 #include <iterator>
 

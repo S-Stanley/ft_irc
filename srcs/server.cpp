@@ -13,20 +13,20 @@ void    Server::set_config(int port, char *password)
     this->port = port;
 }
 
-void    Server::setup(void)
+bool    Server::setup(void)
 {
     int opt = 1;
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
-        perror("socket failed");
-        exit(EXIT_FAILURE);
+        std::cerr << "socket failed\n";
+        return (false);
     }
 
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
     {
-        perror("setcokopt");
-        exit(EXIT_FAILURE);
+        std::cerr << "setcokopt failed\n";
+        return (false);
     }
 
     address.sin_family = AF_INET;
@@ -35,18 +35,19 @@ void    Server::setup(void)
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
     {
-        perror("listen");
-        exit(EXIT_FAILURE);
+        std::cerr << "bind failed\n";
+        return (false);
     }
 
     if (listen(server_fd, 3) < 0)
     {
-        perror("listen");
-        exit(EXIT_FAILURE);
+        std::cerr << "listen failed\n";
+        return (false);
     }
 
     fds[0].fd = server_fd;
     fds[0].events = POLLIN;
+    return (true);
 }
 
 void    Server::update_fds_all_users(int user_id)
@@ -88,7 +89,7 @@ bool    Server::exec_user(std::string *value, unsigned int i, users *user)
         return (true);
     }
     all_users = set_user_username(all_users, i -1, value[1]);
-    if (strcmp(user->nickname.c_str(), "") != 0)
+    if (ft_strcmp(user->nickname.c_str(), "") != 0)
     {
         set_user_authentificate(i -1, all_users);
         send_connection_ok(fds[i].fd, user->nickname);
@@ -412,13 +413,13 @@ void    Server::run(void)
             {
                 if ((new_socket[socket_id] = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
                 {
-                    perror("accept");
-                    exit(EXIT_FAILURE);
+                    std::cerr << "accept failed\n";
+                    return ;
                 }
                 all_users = add_user(all_users, new_user(socket_id, "", ""));
                 fds[number_of_socket].fd = new_socket[socket_id];
                 fds[number_of_socket].events = POLLIN;
-                send(fds[number_of_socket].fd, "Chatting in : <#Inserer le bon channel>\n", strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
+                send(fds[number_of_socket].fd, "Chatting in : <#Inserer le bon channel>\n", ft_strlen("Chatting in : <#Inserer le bon channel>\n"), 0);
                 number_of_socket++;
                 socket_id++;
             }
