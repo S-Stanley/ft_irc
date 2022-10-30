@@ -11,7 +11,7 @@ bool	channel_exists(std::string name, channel *channels)
     {
         return (true);
     }
-    while (tmp->next)
+    while (tmp)
     {
         if (tmp->name == name)
         {
