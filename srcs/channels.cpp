@@ -65,6 +65,8 @@ void    display_channel_users(channel *chan)
 {
     channel *tmp = chan;
     int i = 0;
+    if (!chan)
+        return ;
     while (i < tmp->nb_users)
     {
         std::cout << "User: " <<  i << " - user_id: " << tmp->users_id[i] << std::endl;
