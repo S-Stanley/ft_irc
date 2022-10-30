@@ -174,13 +174,11 @@ bool    Server::exec_join(std::string *value, unsigned int i, users *user)
         chan = create_channel(value[1], "Default Topic");
         chan->users_id[chan->nb_users] = user->user_id;
         chan->nb_users++;
-        display_channel_users(chan);
         channels = add_new_channel(channels, chan);
     }
     else
     {
         chan = find_channel(value[1], channels);
-        display_channel_users(chan);
         if (find_channel_user(chan, user->user_id) != -1)
         {
             std::cout << "L'utilisateur est déjà membre du channel...\n"; // Que renvoyer ?
@@ -188,7 +186,6 @@ bool    Server::exec_join(std::string *value, unsigned int i, users *user)
         }
         chan->users_id[chan->nb_users] = user->user_id;
         chan->nb_users++;
-        display_channel_users(chan);
 
         for (int it = 0; it < (chan->nb_users); it++)
         {
