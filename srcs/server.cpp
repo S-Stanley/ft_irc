@@ -242,6 +242,10 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
                 ""
             );
     }
+    if (!value[2].empty() && find_user_by_nickname(value[2], all_users))
+        send_not_on_channel(chan->name, new_socket[find_user_by_nickname(value[2], all_users)->user_id]);
+    else
+        send_not_on_channel(chan->name, fds[i].fd);
     for (int i = u; i < chan->nb_users; ++i)
         chan->users_id[i] = chan->users_id[i + 1];
     chan->nb_users--;
@@ -337,7 +341,7 @@ void    Server::exec_kick(std::string *value, unsigned int i)
     else
     {
         exec_part(value, find_user_by_nickname(value[2], all_users)->user_id + 1, find_user_by_nickname(value[2], all_users));
-    } 
+    }
 }
 
 bool    Server::exec(std::string *all, unsigned int i)
