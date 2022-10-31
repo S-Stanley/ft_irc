@@ -39,6 +39,7 @@ class Server {
         bool    exec_shutdown(std::string *value);
         void    exec_quit(unsigned int i, users *user);
         void    exec_kick(std::string *value, unsigned int i);
+        void    exec_topic(std::string *value, unsigned int i, users *user);
     private:
         struct sockaddr_in  address;
         int                 server_fd;
