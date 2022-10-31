@@ -376,6 +376,37 @@ void    Server::exec_kick(std::string *value, unsigned int i)
     }
 }
 
+void    Server::exec_topic(std::string *value, unsigned int i, users *user)
+{
+    if (!user->is_operator)
+    {
+        send_no_privileges(fds[i].fd);
+        return ;
+    }
+    else if (value[1].empty() || value[2].empty())
+    {
+        send_need_more_params(value[0], fds[i].fd);
+        return ;
+    }
+    else if (!channel_exists(value[1], channels))
+    {
+        send_no_such_channel(value[1], fds[i].fd);
+        return ;
+    }
+
+    channel *chan = find_channel(value[1], channels);
+    if (find_channel_user(chan, user->user_id) == -1)
+    {
+        send_not_on_channel(chan->name, fds[i].fd);
+        return ;
+    }
+    else
+    {
+        chan->topic = value[2];
+        send_rpl_topic(chan, fds[i].fd);
+    }
+}
+
 bool    Server::exec(std::string *all, unsigned int i)
 {
     users *user = get_user(i -1, all_users);
@@ -418,6 +449,12 @@ bool    Server::exec(std::string *all, unsigned int i)
             exec_quit(i, user);
             if (!all_users)
                 return (exec_shutdown(value));
+        }
+        if (value[0] == "TOPIC")
+        {
+            exec_topic(value, i, user);
+            delete[] value;
+            return true;
         }
         delete[] value;
     }

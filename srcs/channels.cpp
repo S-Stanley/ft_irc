@@ -101,14 +101,14 @@ int remove_user_from_channels(channel *channels, int user_id, pollfd *fds, std::
             {
                 tmp->users_id[i] = tmp->users_id[i + 1];
             }
+            tmp->nb_users--;
             for (int j = 0; j < tmp->nb_users; j++)
             {
-                if (tmp->users_id[j] != 0 && tmp->users_id[j] > tmp_id)
+                if (tmp->users_id[j] > 0 && tmp->users_id[j] > tmp_id)
                 {
                     tmp->users_id[j]--; // Je décrémente tous les ids qui sont dans mon tableau d'int sinon ils ne s'actualisent pas avec update_fds_all_users()
                 }
             }
-            tmp->nb_users--;
             for (int it = 0; it < (tmp->nb_users); it++)
             {
                 send_user_part_channel(fds[tmp->users_id[it] + 1].fd, nickname, username, tmp->name, part_msg);
