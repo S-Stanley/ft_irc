@@ -132,7 +132,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
         send_message_to_user(
             new_socket[user_to_find->user_id],
             value[1],
-            value[2],
+            append_to_string(value, 2),
             user,
             true
         );
@@ -146,7 +146,7 @@ bool    Server::exec_msg(std::string *value, unsigned int i, users *user)
                 send_message_to_user(
                     fds[chan->users_id[it] + 1].fd,
                     value[1],
-                    value[2],
+                    append_to_string(value, 2),
                     user,
                     false
                 );
@@ -173,7 +173,7 @@ void    Server::exec_away(std::string *value, unsigned int i)
     }
     else
     {
-        set_user_away(i - 1, all_users, value[1]);
+        set_user_away(i - 1, all_users, append_to_string(value, 1));
         send_away_message(fds[i].fd);
     }
 }
@@ -255,7 +255,7 @@ bool    Server::exec_part(std::string *value, unsigned int i, users *user)
                 user->nickname,
                 user->username,
                 value[1],
-                value[2]
+                append_to_string(value, 2)
             );
         else
             send_user_part_channel(
@@ -359,16 +359,19 @@ void    Server::exec_kick(std::string *value, unsigned int i)
     {
         std::cout << "no privilege for kick\n";
         send_no_privileges(fds[i].fd);
+        delete[] value;
     }
     else if (value->length() < 3 || value[1].empty() || value[2].empty())
     {
         std::cout << "missing params for kick \n";
         send_need_more_params(value[0], fds[i].fd);
+        delete[] value;
     }
     else if (!channel_exists(value[1], channels))
     {
         std::cout << "channel does not exit for kick\n";
         send_no_such_channel(value[1], fds[i].fd);
+        delete[] value;
     }
     else
     {
@@ -412,7 +415,7 @@ bool    Server::exec(std::string *all, unsigned int i)
     users *user = get_user(i -1, all_users);
     for (int x = 0; x < (int)all->length(); x++)
     {
-        std::string *value = split(all[x], " ");
+        std::string *value = split_ft(all[x], " ");
 
         if (value[0] == "PASS")
             if (!exec_pass(value, i))
@@ -441,9 +444,10 @@ bool    Server::exec(std::string *all, unsigned int i)
             if (exec_kill(value, i, user))
                 return (true);
         if (value[0] == "KICK")
+        {
             (exec_kick(value, i));
-        if (value[0] == "SHUTDOWN")
-            return (exec_shutdown(value));
+            continue;
+        }
         if (value[0] == "QUIT")
         {
             exec_quit(i, user);

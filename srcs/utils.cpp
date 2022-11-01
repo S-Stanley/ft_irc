@@ -21,11 +21,35 @@ std::string *split(std::string to_split, std::string split_at)
             break ;
         }
         token[i] = to_split.substr(0, pos);
-        to_split.erase(0, pos + split_at.length());
+		if (i + 1 < to_split.size())
+        	to_split.erase(0, pos + split_at.length());
         i++;
     }
     return (token);
 }
+
+
+std::string *split_ft(std::string to_split, std::string split_at)
+{
+    size_t pos = 0;
+	size_t endpos;
+    std::string *token = new std::string[100];
+	unsigned int index = 0;
+	std::string	val;
+
+	while (to_split.find(split_at, pos) != std::string::npos)
+	{
+		if (pos != 0)
+			pos = pos + 1;
+		endpos = to_split.find(" ", pos + 1);
+		val = to_split.substr(pos, endpos - pos);
+		pos = endpos;
+		token[index] = (val);
+		index++;
+	}
+	return (token);
+}
+
 
 int	ft_iswhitespace(char c)
 {
@@ -99,4 +123,17 @@ size_t	ft_strcmp(const char *s1, const char *s2)
 		i++;
 	}
 	return (0);
+}
+
+std::string append_to_string(std::string *arr, unsigned int key)
+{
+    std::string to_return;
+
+    for (int i = key; i < (int)arr->length(); i++)
+    {
+        to_return.append(arr[i]);
+        if (i + 1 != (int)arr->length())
+            to_return.append(" ");
+    }
+    return (to_return);
 }
